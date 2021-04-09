@@ -13,7 +13,15 @@ const createToken = (id) => {
     expiresIn: maxAge,
   });
 };
-
+exports.getNameAndAvatar = async (id) => {
+  let author = {};
+  let user = await User.findById({ _id: id });
+  if (user) {
+    author.name = user.toObject().username;
+    author.avatar = user.toObject().avatar;
+  }
+  return author;
+};
 module.exports.getUser = (req, res, next) => {};
 module.exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
