@@ -8,5 +8,7 @@ router.use(authUser);
 router.post("/addProject", projectController.addProject);
 router.post("/deleteProject", projectController.deleteProject);
 router.post("/getPosts", projectController.getPosts);
-
+router.post("/getProject",projectController.getProject);
+router.post("/getAllProject",projectController.getAllProject);
+router.post("/joinProject", projectController.joinProject);
 module.exports = router;

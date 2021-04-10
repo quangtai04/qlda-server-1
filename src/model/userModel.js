@@ -39,6 +39,14 @@ var userSchema = Schema(
       type: Array,
       default: [],
     },
+    projectCreated: {
+      type: Array,
+      default: [],
+    },
+    projectJoin: {
+      type: Array,
+      default: [],
+    },
   },
   { timestamps: true }
 );
@@ -80,7 +88,79 @@ userSchema.statics.updateFields = async function (user_id, data) {
   }
   throw Error("Update error!");
 };
-
+userSchema.statics.createProject = async function (userId, projectId) {
+  var listProject = await (await this.findOne({_id: userId})).get("projectCreated");
+  listProject.push(projectId);
+  const query = await this.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        projectCreated: listProject,
+      }
+    }
+  );
+  if(query) {
+    return query;
+  }
+  throw Error("Create error");
+}
+userSchema.statics.deleteProjectCreated = async function (userId, projectId) {
+  var listProject = await (await this.findOne({_id: userId})).get("projectCreated");
+  if(listProject.indexOf(projectId) != -1) {
+    listProject.splice(listProject.indexOf(projectId),1);
+  } else {
+    throw Error("Không tồn tại project");
+  }
+  const query = await this.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        projectCreated: listProject,
+      }
+    }
+  )
+  if(query) {
+    return query;
+  }
+  throw Error("Create error");
+}
+userSchema.statics.joinProject = async function (userId, projectId) {
+  var listProject = await (await this.findOne({_id: userId})).get("projectJoin");
+  listProject.push(projectId);
+  const query = await this.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        projectJoin: listProject,
+      }
+    }
+  );
+  if(query) {
+    return query;
+  }
+  throw Error("Create error");
+}
+userSchema.statics.outProject = async function (userId, projectId) {
+  var listProject = await (await this.findOne({_id: userId})).get("projectJoin");
+  console.log(listProject);
+  if(listProject.indexOf(projectId) != -1) {
+    listProject.splice(listProject.indexOf(projectId),1);
+  } else {
+    throw Error("Không tồn tại project");
+  }
+  const query = await this.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        projectJoin: listProject,
+      }
+    }
+  );
+  if(query) {
+    return query;
+  }
+  throw Error("Create error");
+}
 userSchema.statics.changePassword = async function (user_id, _newPassword) {
   const salt = await bcrypt.genSalt();
   const newPassword = await bcrypt.hash(_newPassword, salt);

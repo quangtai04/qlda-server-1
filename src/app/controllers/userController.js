@@ -6,6 +6,7 @@ const {
   getCurrentId,
 } = require("../../helper/responseHelper");
 const { use } = require("../../routers/usersRouter");
+const Project = require("../../model/projectModel");
 
 const maxAge = 3 * 24 * 60 * 60;
 const createToken = (id) => {
