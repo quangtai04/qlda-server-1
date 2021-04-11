@@ -10,30 +10,54 @@ const Comment = require("../../model/commentModel");
 const { use } = require("../../routers/usersRouter");
 const { getNameAndAvatar } = require("./userController");
 
-module.exports.addProject = async (req, res) => {
+module.exports.addProject = async (req, res) => {   //req: projectId
   let body = req.body;
-  let { userId } = req.body;
+  // let { userId } = req.body;
+  let userId = await getCurrentId(req);
+  body.admin = [userId];
+  body.userId = userId;
   try {
     let user = await User.findById(userId);
     if (user) {
       var project = new Project(body);
-
-      project.save(function (err, obj) {
+      project.save(async function (err, obj) {
         if (err)
           return handleErrorResponse(res, 400, null, "Add project thất bại!");
-
-        return handleSuccessResponse(
-          res,
-          200,
-          { projectId: project._id },
-          "Add project thành công!"
-        );
+        var createdProject = await User.createProject(userId, project._id);
+        if(createdProject)
+        {  return handleSuccessResponse(
+            res,
+            200,
+            { projectId: project._id },
+            "Add project thành công!"
+          );
+        }
       });
     }
   } catch (error) {
     return handleErrorResponse(res, 401, "Không tìm thấy User!");
   }
 };
+module.exports.joinProject = async (req, res) => {
+  let userId = await getCurrentId(req);
+  let {projectId} = req.body;
+  try {
+    let query1 = await Project.userJoin(userId, projectId);
+    let query2 = await User.joinProject(userId, projectId);
+    return handleSuccessResponse(
+      res,
+      200,
+      {userId: userId, projectId: projectId},
+      'Tham gia Project thành công'
+    )
+  } catch (error) {
+    return handleErrorResponse(
+      res,
+      400,
+      'Tham gia project thất bại '+userId+"; "+projectId
+    )
+  }
+}
 module.exports.getPosts = async (req, res) => {
   let { projectId } = req.body;
   try {
@@ -72,8 +96,54 @@ module.exports.deleteProject = async (req, res) => {
     let project = await Project.findOneAndRemove({ _id: projectId });
     if (!project)
       return handleErrorResponse(res, 400, "Không tồn tại projectID");
-    return handleSuccessResponse(res, 200, null, "Xóa thành công");
+    let query = await User.deleteProjectCreated(project.userId, projectId);
+    if(!query) {
+      return handleErrorResponse(res, 400, 'Error deleteProjectCreated');
+    }
+    let listUserJoin = await project.get('userJoin');
+    listUserJoin.map(async (value, i) => {
+      let query = await User.outProject(value, projectId);
+      if(!query) {
+        return handleErrorResponse("Error outProject!");
+      }
+    });
+    return handleSuccessResponse(res, 200, project, "Xóa thành công");
   } else {
     return handleErrorResponse(res, 400, "Không tồn tại projectID");
   }
 };
+module.exports.getProject = async (req, res) => {
+  try {
+    let userId = await getCurrentId(req);
+    let userProject = await Project.find({userId: userId});
+    return handleSuccessResponse(
+      res,
+      200,
+      userProject,
+      'Thành công'
+    )
+  } catch (error) {
+    return handleErrorResponse(
+      res,
+      400,
+      'Lỗi không thể lấy dữ liệu!'
+    )
+  }
+}
+module.exports.getAllProject = async (req, res) => {
+  try {
+    let listProject = await Project.find({});
+    return handleSuccessResponse(
+      res,
+      200,
+      listProject,
+      'Thành công'
+    )
+  } catch (error) {
+    return handleErrorResponse(
+      res,
+      400,
+      'Không thể lấy dữ liệu'
+    )
+  }
+}
