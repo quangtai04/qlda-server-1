@@ -10,9 +10,9 @@ const Comment = require("../../model/commentModel");
 const { use } = require("../../routers/usersRouter");
 const { getNameAndAvatar } = require("./userController");
 
-module.exports.addProject = async (req, res) => {   //req: projectId
+module.exports.addProject = async (req, res) => {
+  // var io = req.app.get("io");
   let body = req.body;
-  // let { userId } = req.body;
   let userId = await getCurrentId(req);
   body.admin = [userId];
   body.userId = userId;
@@ -24,11 +24,11 @@ module.exports.addProject = async (req, res) => {   //req: projectId
         if (err)
           return handleErrorResponse(res, 400, null, "Add project thất bại!");
         var createdProject = await User.createProject(userId, project._id);
-        if(createdProject)
-        {  return handleSuccessResponse(
+        if (createdProject) {
+          return handleSuccessResponse(
             res,
             200,
-            { projectId: project._id },
+            { project: project },
             "Add project thành công!"
           );
         }
@@ -40,24 +40,24 @@ module.exports.addProject = async (req, res) => {   //req: projectId
 };
 module.exports.joinProject = async (req, res) => {
   let userId = await getCurrentId(req);
-  let {projectId} = req.body;
+  let { projectId } = req.body;
   try {
     let query1 = await Project.userJoin(userId, projectId);
     let query2 = await User.joinProject(userId, projectId);
     return handleSuccessResponse(
       res,
       200,
-      {userId: userId, projectId: projectId},
-      'Tham gia Project thành công'
-    )
+      { userId: userId, projectId: projectId },
+      "Tham gia Project thành công"
+    );
   } catch (error) {
     return handleErrorResponse(
       res,
       400,
-      'Tham gia project thất bại '+userId+"; "+projectId
-    )
+      "Tham gia project thất bại " + userId + "; " + projectId
+    );
   }
-}
+};
 module.exports.getPosts = async (req, res) => {
   let { projectId } = req.body;
   try {
@@ -97,13 +97,13 @@ module.exports.deleteProject = async (req, res) => {
     if (!project)
       return handleErrorResponse(res, 400, "Không tồn tại projectID");
     let query = await User.deleteProjectCreated(project.userId, projectId);
-    if(!query) {
-      return handleErrorResponse(res, 400, 'Error deleteProjectCreated');
+    if (!query) {
+      return handleErrorResponse(res, 400, "Error deleteProjectCreated");
     }
-    let listUserJoin = await project.get('userJoin');
+    let listUserJoin = await project.get("userJoin");
     listUserJoin.map(async (value, i) => {
       let query = await User.outProject(value, projectId);
-      if(!query) {
+      if (!query) {
         return handleErrorResponse("Error outProject!");
       }
     });
@@ -115,35 +115,17 @@ module.exports.deleteProject = async (req, res) => {
 module.exports.getProject = async (req, res) => {
   try {
     let userId = await getCurrentId(req);
-    let userProject = await Project.find({userId: userId});
-    return handleSuccessResponse(
-      res,
-      200,
-      userProject,
-      'Thành công'
-    )
+    let userProject = await Project.find({ userId: userId });
+    return handleSuccessResponse(res, 200, userProject, "Thành công");
   } catch (error) {
-    return handleErrorResponse(
-      res,
-      400,
-      'Lỗi không thể lấy dữ liệu!'
-    )
+    return handleErrorResponse(res, 400, "Lỗi không thể lấy dữ liệu!");
   }
-}
+};
 module.exports.getAllProject = async (req, res) => {
   try {
     let listProject = await Project.find({});
-    return handleSuccessResponse(
-      res,
-      200,
-      listProject,
-      'Thành công'
-    )
+    return handleSuccessResponse(res, 200, listProject, "Thành công");
   } catch (error) {
-    return handleErrorResponse(
-      res,
-      400,
-      'Không thể lấy dữ liệu'
-    )
+    return handleErrorResponse(res, 400, "Không thể lấy dữ liệu");
   }
-}
+};

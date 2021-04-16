@@ -23,7 +23,7 @@ module.exports.addPost = async (req, res) => {
           return handleSuccessResponse(
             res,
             200,
-            { postID: post._id },
+            { post: post },
             "Add thành công!"
           );
         });
