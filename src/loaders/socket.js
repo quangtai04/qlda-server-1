@@ -22,13 +22,17 @@ module.exports = (server) => {
   nsGame.on("connection", function (socket) {
     socket.on("joinRoom", (data) => {
       socket.join(data.roomId);
-      console.log(getIDbyRoomeName("60788e3ffb44b7321c3d2798"));
+      console.log(getIDbyRoomeName(data.roomId));
     });
     socket.on("createdPost", (data) => {
       io.of("project")
-        .to("60788e3ffb44b7321c3d2798")
+        .to(data.roomId)
         .emit("loadPost", { data: data });
     });
+    // socket.on("createComment", (data) => {
+    //   io.of("project").to(data.roomId)
+    //   .emit("loadComment");
+    // })
   });
 
   return io;
