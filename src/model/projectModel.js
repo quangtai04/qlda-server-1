@@ -16,12 +16,16 @@ var projectSchema = Schema(
   },
   { timestamps: true }
 );
-projectSchema.statics.userJoin = async (userId, projectId) => {
-  var listUser = await (await projectSchema.findOne({ _id: projectId })).get(
+projectSchema.statics.userJoin = async function (userId, projectId) {
+  var listUser = await (await this.findOne({ _id: projectId })).get(
     "userJoin"
   );
-  listUser.push(userId);
-  var query = await projectSchema.updateOne(
+  if(listUser.indexOf(userId) == -1){
+    listUser.push(userId);
+  } else {
+    throw Error("User đã tham gia project");
+  }
+  var query = await this.updateOne(
     { _id: projectId },
     {
       $set: {
@@ -34,7 +38,7 @@ projectSchema.statics.userJoin = async (userId, projectId) => {
   }
   throw Error("Không thể tham gia project!");
 };
-projectSchema.statics.userOut = async (userId, projectId) => {
+projectSchema.statics.userOut = async function (userId, projectId) {
   var listUser = await (await projectSchema.findOne({ _id: projectId })).get(
     "userJoin"
   );
