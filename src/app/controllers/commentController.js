@@ -7,8 +7,9 @@ const Comment = require("../../model/commentModel");
 const Post = require("../../model/postModel");
 const Project = require("../../model/projectModel");
 const User = require("../../model/userModel");
+const { getListPosts } = require("./projectController");
 
-module.exports.addComment = async (req, res) => {   // req: {postId, content}
+module.exports.addComment = async (req, res) => {
   let body = req.body;
   let authorId = await getCurrentId(req);
   body.authorId = authorId;
@@ -21,22 +22,27 @@ module.exports.addComment = async (req, res) => {   // req: {postId, content}
         if (post) {
           let project = await Project.findById(post.projectId);
           // kiểm tra user có join project không
-          if(project.userId != authorId && project.userJoin.indexOf(authorId) == -1) {
+          if (
+            project.userId != authorId &&
+            project.userJoin.indexOf(authorId) == -1
+          ) {
             return handleErrorResponse(
               res,
               400,
               "Bạn không có quyền comment trong bài đăng!"
-            )
+            );
           }
           var comment = new Comment(body);
-          comment.save(function (err, obj) {
-            if (err)
+          comment.save(async function (err, obj) {
+            if (err) {
               return handleErrorResponse(res, 400, null, "Add thất bại!");
+            }
+            var listPost = await getListPosts(post.projectId);
+
             return handleSuccessResponse(
               res,
               200,
-              // { commentID: comment._id },
-              body,
+              { post: listPost },
               "Add thành công!"
             );
           });

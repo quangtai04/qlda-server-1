@@ -126,6 +126,7 @@ module.exports.getUserInfo = async (req, res) => {
         200,
         {
           role: user.get("role"),
+          userId: user_id,
           avatar: user.get("avatar"),
           language: user.get("language"),
           email: user.get("email"),

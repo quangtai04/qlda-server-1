@@ -38,31 +38,19 @@ module.exports.addProject = async (req, res) => {
     return handleErrorResponse(res, 401, "Không tìm thấy User!");
   }
 };
-module.exports.checkJoined = async (req, res) => { //req: {projectId}
+module.exports.checkJoined = async (req, res) => {
+  //req: {projectId}
   let userId = await getCurrentId(req);
   let project = await Project.findById(projectId);
-    if (project) {
-      if(project.userId != userId && project.userJoin.indexOf(userId) == -1) {
-        return handleErrorResponse(
-          res,
-          400,
-          "ErrorSecurity"
-        )
-      }
-      return handleSuccessResponse(
-        res,
-        200,
-        {},
-        "SecurityOK"
-      );
-    } else {
-      return handleErrorResponse(
-        res,
-        400,
-        "ErrorProjectId"
-      )
+  if (project) {
+    if (project.userId != userId && project.userJoin.indexOf(userId) == -1) {
+      return handleErrorResponse(res, 400, "ErrorSecurity");
     }
-}
+    return handleSuccessResponse(res, 200, {}, "SecurityOK");
+  } else {
+    return handleErrorResponse(res, 400, "ErrorProjectId");
+  }
+};
 module.exports.joinProject = async (req, res) => {
   let userId = await getCurrentId(req);
   let { projectId } = req.body;
@@ -76,11 +64,29 @@ module.exports.joinProject = async (req, res) => {
       "Tham gia Project thành công"
     );
   } catch (error) {
-    return handleErrorResponse(
-      res,
-      400,
-      error+""
-    );
+    return handleErrorResponse(res, 400, error + "");
+  }
+};
+exports.getListPosts = async (projectId) => {
+  let project = await Project.findById(projectId);
+  if (project) {
+    var postList = await Post.find({ projectId: projectId });
+    let newData = [];
+    for (let i = 0; i < postList.length; i++) {
+      commentList = await Comment.find({ postId: postList[i]._id });
+      for (let j = 0; j < commentList.length; j++) {
+        let author = await getNameAndAvatar(commentList[j].authorId);
+        commentList[j] = commentList[j].toObject();
+        commentList[j].author = author;
+      }
+      let author = await getNameAndAvatar(postList[i].authorId);
+      let tmp = postList[i].toObject();
+      tmp.comments = commentList;
+      tmp.author = author;
+      tmp.date = tmp.createdAt.toString().substring(4, 15);
+      newData.push(tmp);
+    }
+    return newData;
   }
 };
 module.exports.getPosts = async (req, res) => {
@@ -90,29 +96,14 @@ module.exports.getPosts = async (req, res) => {
     let project = await Project.findById(projectId);
     if (project) {
       // Kiểm tra xem user có quyền truy cập Project hay không
-      if(project.userId != userId && project.userJoin.indexOf(userId) == -1) {
+      if (project.userId != userId && project.userJoin.indexOf(userId) == -1) {
         return handleErrorResponse(
           res,
           400,
           "Bạn không có quyền truy cập Project"
-        )
+        );
       }
-      var postList = await Post.find({ projectId: projectId });
-      let newData = [];
-      for (let i = 0; i < postList.length; i++) {
-        commentList = await Comment.find({ postId: postList[i]._id });
-        for (let j = 0; j < commentList.length; j++) {
-          let author = await getNameAndAvatar(commentList[j].authorId);
-          commentList[j] = commentList[j].toObject();
-          commentList[j].author = author;
-        }
-        let author = await getNameAndAvatar(postList[i].authorId);
-        let tmp = postList[i].toObject();
-        tmp.comments = commentList;
-        tmp.author = author;
-        tmp.date = tmp.createdAt.toString().substring(4, 15);
-        newData.push(tmp);
-      }
+      let newData = await this.getListPosts(projectId);
       return handleSuccessResponse(
         res,
         200,
@@ -146,7 +137,8 @@ module.exports.deleteProject = async (req, res) => {
     return handleErrorResponse(res, 400, "Không tồn tại projectID");
   }
 };
-module.exports.getProject = async (req, res) => {     // project created
+module.exports.getProject = async (req, res) => {
+  // project created
   try {
     let userId = await getCurrentId(req);
     let userProject = await Project.find({ userId: userId });
@@ -164,43 +156,67 @@ module.exports.getAllProject = async (req, res) => {
   }
 };
 module.exports.getProjectById = async (req, res) => {
-  let {projectId} = req.body;
+  let { projectId } = req.body;
   try {
-    let project = await Project.findOne({_id: projectId});
-    return handleSuccessResponse(
-      res,
-      200,
-      project,
-      "Thành công"
-    )
+    let project = await Project.findOne({ _id: projectId });
+    return handleSuccessResponse(res, 200, project, "Thành công");
   } catch (error) {
-    return handleErrorResponse(
-      res,
-      400,
-      "Không tồn tại project"
-    )
+    return handleErrorResponse(res, 400, "Không tồn tại project");
   }
-}
+};
 module.exports.getProjectJoined = async (req, res) => {
   let userId = await getCurrentId(req);
   try {
-    let listProjectIdJoin = await (await User.findOne({_id: userId})).get("projectJoin");
+    let listProjectIdJoin = await (await User.findOne({ _id: userId })).get(
+      "projectJoin"
+    );
     let listProjectJoin = [];
-    for(var i=0; i<listProjectIdJoin.length; i++) {
-      listProjectJoin.push(await Project.findOne({_id: listProjectIdJoin[i]}));
+    for (var i = 0; i < listProjectIdJoin.length; i++) {
+      listProjectJoin.push(
+        await Project.findOne({ _id: listProjectIdJoin[i] })
+      );
     }
     return handleSuccessResponse(
       res,
       200,
-      {projectJoined: listProjectJoin},
+      { projectJoined: listProjectJoin },
       "Thành công"
-    )    
+    );
   } catch (error) {
-    return handleErrorResponse(
-      res,
-      400,
-      "Lỗi không thể lấy dữ liệu"
-    )
+    return handleErrorResponse(res, 400, "Lỗi không thể lấy dữ liệu");
   }
-  
-}
+};
+module.exports.getChat = async (req, res) => {
+  let { projectId } = req.body;
+  let project = await Project.findById(projectId);
+  if (project) {
+    return handleSuccessResponse(
+      res,
+      200,
+      { listChat: project.chat },
+      "Lấy comments thành công!"
+    );
+  } else return handleErrorResponse(res, 400, "Không tồn tại projectId");
+};
+
+module.exports.addChat = async (req, res) => {
+  let body = req.body;
+  let { projectId } = req.body;
+  let project = await Project.findById(projectId);
+  let user = await User.findById(body.userId);
+  if (project && user) {
+    project.chat.push({
+      content: body.content,
+      userId: body.userId,
+      userName: user.username,
+      avatar: user.avatar,
+    });
+    await project.save();
+    return handleSuccessResponse(
+      res,
+      200,
+      { listChat: project.chat },
+      "Lấy comments thành công!"
+    );
+  } else return handleErrorResponse(res, 400, "Không tồn tại projectId");
+};

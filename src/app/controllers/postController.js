@@ -6,9 +6,7 @@ const {
 const Post = require("../../model/postModel");
 const User = require("../../model/userModel");
 const Project = require("../../model/projectModel");
-const { getNameAndAvatar } = require("./userController");
-const Comment = require("../../model/commentModel");
-
+const { getListPosts } = require("./projectController");
 
 module.exports.addPost = async (req, res) => {
   let body = req.body;
@@ -20,18 +18,17 @@ module.exports.addPost = async (req, res) => {
     if (user) {
       let project = await Project.findById(projectId);
       // kiểm tra user có join project không
-      if(project.userId != authorId && project.userJoin.indexOf(authorId) == -1) {
-        return handleErrorResponse(
-          res,
-          400,
-          "Bạn không có quyền đăng bài!"
-        )
+      if (
+        project.userId != authorId &&
+        project.userJoin.indexOf(authorId) == -1
+      ) {
+        return handleErrorResponse(res, 400, "Bạn không có quyền đăng bài!");
       }
       if (project) {
         var post = new Post(body);
         post.save(async function (err, obj) {
           if (err) return handleErrorResponse(res, 400, null, "Add thất bại!");
-          var listPost = await getPostFunc(projectId);
+          var listPost = await getListPosts(projectId);
           return handleSuccessResponse(
             res,
             200,
@@ -77,36 +74,5 @@ module.exports.getComments = async (req, res) => {
       { commentList: commentList },
       "Lấy comments thành công!"
     );
-  }
-  else return handleErrorResponse(
-    res,
-    400,
-    "Không tồn tại postID"
-  )
+  } else return handleErrorResponse(res, 400, "Không tồn tại postID");
 };
-const getPostFunc = async (projectId) => {
-  try {
-    let project = await Project.findById(projectId);
-    if (project) {
-      var postList = await Post.find({ projectId: projectId });
-      let newData = [];
-      for (let i = 0; i < postList.length; i++) {
-        commentList = await Comment.find({ postId: postList[i]._id });
-        for (let j = 0; j < commentList.length; j++) {
-          let author = await getNameAndAvatar(commentList[j].authorId);
-          commentList[j] = commentList[j].toObject();
-          commentList[j].author = author;
-        }
-        let author = await getNameAndAvatar(postList[i].authorId);
-        let tmp = postList[i].toObject();
-        tmp.comments = commentList;
-        tmp.author = author;
-        tmp.date = tmp.createdAt.toString().substring(4, 15);
-        newData.push(tmp);
-      }
-      return newData;
-    }
-  } catch (error) {
-    return error;
-  }
-}
