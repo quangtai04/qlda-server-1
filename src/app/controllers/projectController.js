@@ -67,7 +67,7 @@ module.exports.joinProject = async (req, res) => {
     return handleErrorResponse(res, 400, error + "");
   }
 };
-exports.getListPosts = async (projectId) => {
+exports.getListPosts = async (projectId) => {  
   let project = await Project.findById(projectId);
   if (project) {
     var postList = await Post.find({ projectId: projectId });
@@ -100,8 +100,8 @@ module.exports.getPosts = async (req, res) => {
         return handleErrorResponse(
           res,
           400,
-          "Bạn không có quyền truy cập Project"
-        );
+          "ErrorSecurity"
+        )
       }
       let newData = await this.getListPosts(projectId);
       return handleSuccessResponse(
@@ -220,3 +220,43 @@ module.exports.addChat = async (req, res) => {
     );
   } else return handleErrorResponse(res, 400, "Không tồn tại projectId");
 };
+  
+
+module.exports.getUserJoin = async (req, res) => {
+  let {projectId} = req.body;
+  let userId = await getCurrentId(req);
+  let project = await Project.findById(projectId);
+  if(project) {
+    if(project.userId != userId && project.userJoin.indexOf(userId) == -1) {
+      return handleErrorResponse(
+        res,
+        400,
+        "ErrorSecurity"
+      )
+    }
+    let listUser = project.userJoin;
+    listUser.push(project.userId);
+    let listProfile = [];
+    for(let i=0; i<listUser.length; i++) {
+      let user = await User.findById(listUser[i]);
+      listProfile.push({
+        userId: listUser[i],
+        username: user.username,
+        email: user.email,
+        avatar: user.avatar,
+        admin: project.admin.indexOf(listUser[i]) != -1 ? "Admin" : "",
+      });
+    }
+    return handleSuccessResponse(
+      res,
+      200,
+      {listUser: listProfile},
+      "Thành công"
+    )
+  }
+  return handleErrorResponse(
+    res,
+    400,
+    "Thất bại"
+  )
+}

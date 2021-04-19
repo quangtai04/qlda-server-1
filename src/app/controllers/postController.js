@@ -18,11 +18,12 @@ module.exports.addPost = async (req, res) => {
     if (user) {
       let project = await Project.findById(projectId);
       // kiểm tra user có join project không
-      if (
-        project.userId != authorId &&
-        project.userJoin.indexOf(authorId) == -1
-      ) {
-        return handleErrorResponse(res, 400, "Bạn không có quyền đăng bài!");
+      if(project.userId != authorId && project.userJoin.indexOf(authorId) == -1) {
+        return handleErrorResponse(
+          res,
+          400,
+          "ErrorSecurity"
+        )
       }
       if (project) {
         var post = new Post(body);
