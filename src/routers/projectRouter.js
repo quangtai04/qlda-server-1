@@ -14,5 +14,6 @@ router.post("/getProject", projectController.getProject);
 router.post("/getAllProject", projectController.getAllProject);
 router.post("/joinProject", projectController.joinProject);
 router.post("/getProjectById", projectController.getProjectById);
-router.post("/getProjectJoined", projectController.getProjectJoined);
+router.post("/getProjectJoined",projectController.getProjectJoined);
+router.post("/getUserJoin", projectController.getUserJoin);
 module.exports = router;
