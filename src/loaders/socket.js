@@ -1,7 +1,7 @@
 module.exports = (server) => {
   let io = require("socket.io").listen(server);
   const nsGame = io.of("project");
-
+  const listOnline = [];
   const getSocketsbyRoomName = (roomName) => {
     if (typeof nsGame.adapter.rooms[roomName] !== "undefined") {
       let socketsId = nsGame.adapter.rooms[roomName].sockets;
@@ -29,7 +29,38 @@ module.exports = (server) => {
     socket.on("chatting", (data) => {
       io.of("project").to(data.roomId).emit("loadChat", { data: data });
     });
+    socket.on("addTask", (data) => {
+      io.of("project").to(data.roomId).emit("reloadTask", { data: data });
+    });
+    socket.on("online", (data) => {
+      socket.join(data.roomId);
+      listOnline.push({socketId: socket.id, userId: data.userId});
+      let listUserId = [];
+      listOnline.map((value)=>{
+        listUserId.push(value.userId);
+      })
+      io.of("project").to("online").emit("reloadUserOnline", { data: listUserId });
+    });
+    socket.on("loadUserOnline", () => {
+      let listUserId = [];
+      listOnline.map((value)=>{
+        listUserId.push(value.userId);
+      })
+      io.of("project").to("online").emit("reloadUserOnline", { data: listUserId });
+    });
+    socket.on("disconnect", () => {
+      for(var i=0; i<listOnline.length; i++) {
+        if(listOnline[i].socketId == socket.id) {
+          listOnline.splice(i, 1);
+          break;
+        }
+      }
+      let listUserId = [];
+      listOnline.map((value)=>{
+        listUserId.push(value.userId);
+      })
+      io.of("project").to("online").emit("reloadUserOnline", { data: listUserId });
+    })
   });
-
   return io;
 };

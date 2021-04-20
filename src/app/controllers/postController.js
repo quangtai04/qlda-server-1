@@ -6,6 +6,7 @@ const {
 const Post = require("../../model/postModel");
 const User = require("../../model/userModel");
 const Project = require("../../model/projectModel");
+const Comment = require("../../model/commentModel");
 const { getListPosts } = require("./projectController");
 
 module.exports.addPost = async (req, res) => {
@@ -18,13 +19,13 @@ module.exports.addPost = async (req, res) => {
     if (user) {
       let project = await Project.findById(projectId);
       // kiểm tra user có join project không
-      if(project.userId != authorId && project.userJoin.indexOf(authorId) == -1) {
-        return handleErrorResponse(
-          res,
-          400,
-          "ErrorSecurity"
-        )
-      }
+      // if(project.userId != authorId && project.userJoin.indexOf(authorId) == -1) {
+      //   return handleErrorResponse(
+      //     res,
+      //     400,
+      //     "ErrorSecurity"
+      //   )
+      // }
       if (project) {
         var post = new Post(body);
         post.save(async function (err, obj) {
@@ -46,9 +47,15 @@ module.exports.addPost = async (req, res) => {
 module.exports.deletePost = async (req, res) => {
   let { postId } = req.body;
   if (postId) {
-    let post = await Post.findOneAndRemove({ _id: postId });
+    let post = await Post.findByIdAndRemove(postId);
     if (!post) return handleErrorResponse(res, 400, "Không tồn tại postID");
-    return handleSuccessResponse(res, 200, null, "Xóa thành công");
+    let listComment = await Comment.find({postId: postId});
+    for(var i=0; i<listComment.length; i++) {
+      await Comment.findByIdAndRemove(listComment[i]._id);
+    }
+    let projectId = post.projectId.toString();
+    let listPost = await getListPosts(projectId);
+    return handleSuccessResponse(res, 200, { post: listPost, projectId: projectId }, "Xóa thành công");
   } else {
     return handleErrorResponse(res, 400, "Không tồn tại postID");
   }
@@ -61,8 +68,10 @@ module.exports.updatePost = async (req, res) => {
     { content: content },
     { new: true }
   );
+  let projectId = post.projectId.toString();
+  let listPost = await getListPosts(projectId);
   if (!post) return handleErrorResponse(res, 400, "Không tồn tại postId");
-  return handleSuccessResponse(res, 200, null, "Cập nhật thành công");
+  return handleSuccessResponse(res, 200, {post: listPost, projectId: projectId}, "Cập nhật thành công");
 };
 module.exports.getComments = async (req, res) => {
   let { postId } = req.body;
