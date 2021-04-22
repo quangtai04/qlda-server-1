@@ -18,6 +18,7 @@ exports.getNameAndAvatar = async (id) => {
   let author = {};
   let user = await User.findById({ _id: id });
   if (user) {
+    author.authorId = user.toObject()._id;
     author.name = user.toObject().username;
     author.avatar = user.toObject().avatar;
   }

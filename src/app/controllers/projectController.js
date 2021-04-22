@@ -96,13 +96,13 @@ module.exports.getPosts = async (req, res) => {
     let project = await Project.findById(projectId);
     if (project) {
       // Kiểm tra xem user có quyền truy cập Project hay không
-      if (project.userId != userId && project.userJoin.indexOf(userId) == -1) {
-        return handleErrorResponse(
-          res,
-          400,
-          "ErrorSecurity"
-        )
-      }
+      // if (project.userId != userId && project.userJoin.indexOf(userId) == -1) {
+      //   return handleErrorResponse(
+      //     res,
+      //     400,
+      //     "ErrorSecurity"
+      //   )
+      // }
       let newData = await this.getListPosts(projectId);
       return handleSuccessResponse(
         res,
@@ -227,13 +227,13 @@ module.exports.getUserJoin = async (req, res) => {
   let userId = await getCurrentId(req);
   let project = await Project.findById(projectId);
   if(project) {
-    if(project.userId != userId && project.userJoin.indexOf(userId) == -1) {
-      return handleErrorResponse(
-        res,
-        400,
-        "ErrorSecurity"
-      )
-    }
+    // if(project.userId != userId && project.userJoin.indexOf(userId) == -1) {
+    //   return handleErrorResponse(
+    //     res,
+    //     400,
+    //     "ErrorSecurity"
+    //   )
+    // }
     let listUser = project.userJoin;
     listUser.push(project.userId);
     let listProfile = [];

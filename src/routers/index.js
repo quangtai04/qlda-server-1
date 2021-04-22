@@ -1,6 +1,7 @@
 const usersRouter = require("./usersRouter");
 const postRouter = require("./postRouter");
 const projectRouter = require("./projectRouter");
+const taskRouter = require("./taskRouter");
 
 const commentRouter = require("./commentRouter");
 
@@ -15,6 +16,7 @@ module.exports = (app) => {
   app.use("/api/post", postRouter);
   app.use("/api/project", projectRouter);
   app.use("/api/comment", commentRouter);
+  app.use("/api/task", taskRouter);
   app.get("/api/images", async (req, res) => {
     const { resources } = await cloudinary.search
       .expression("folder:dev_setups")
