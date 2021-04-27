@@ -126,7 +126,7 @@ userSchema.statics.deleteProjectCreated = async function (userId, projectId) {
 }
 userSchema.statics.joinProject = async function (userId, projectId) {
   var listProject = await (await this.findOne({_id: userId})).get("projectJoin");
-  if(listProject.indexOf(projectId) == -1) {
+  if(listProject.indexOf(projectId) === -1) {
     listProject.push(projectId);
   } else {
     throw Error("Project đã tồn tại User");
@@ -146,7 +146,6 @@ userSchema.statics.joinProject = async function (userId, projectId) {
 }
 userSchema.statics.outProject = async function (userId, projectId) {
   var listProject = await (await this.findOne({_id: userId})).get("projectJoin");
-  console.log(listProject);
   if(listProject.indexOf(projectId) != -1) {
     listProject.splice(listProject.indexOf(projectId),1);
   } else {

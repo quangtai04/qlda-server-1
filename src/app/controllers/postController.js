@@ -18,14 +18,6 @@ module.exports.addPost = async (req, res) => {
     let user = await User.findById(authorId);
     if (user) {
       let project = await Project.findById(projectId);
-      // kiểm tra user có join project không
-      // if(project.userId != authorId && project.userJoin.indexOf(authorId) == -1) {
-      //   return handleErrorResponse(
-      //     res,
-      //     400,
-      //     "ErrorSecurity"
-      //   )
-      // }
       if (project) {
         var post = new Post(body);
         post.save(async function (err, obj) {

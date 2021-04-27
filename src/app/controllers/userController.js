@@ -106,7 +106,7 @@ module.exports.changePassword = async (req, res) => {
       return handleErrorResponse(
         res,
         400,
-        error.message == "incorrect password"
+        error.message === "incorrect password"
           ? "ERROR! Incorrect current password."
           : error.message
       );
