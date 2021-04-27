@@ -13,7 +13,8 @@ var taskSchema = Schema(
     assignment: {type: Array},
     typeTask: {type: String, default: "Planned"},    
     taskname: {type: String, default: "New Task"},
-    desc: {type: String, default: "This is new task"}
+    desc: {type: String, default: "This is new task"},
+    deadline: {type: Date}
   },
   { timestamps: true }
 );

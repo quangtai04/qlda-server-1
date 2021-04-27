@@ -48,6 +48,9 @@ module.exports = (server) => {
       })
       io.of("project").to("online").emit("reloadUserOnline", { data: listUserId });
     });
+    socket.on("loadMember", (data) => {
+      io.of("project").to("online").emit("reloadMember", { data: data });
+    })
     socket.on("disconnect", () => {
       for(var i=0; i<listOnline.length; i++) {
         if(listOnline[i].socketId == socket.id) {

@@ -26,7 +26,7 @@ module.exports = async (req, res, next) => {
     return handleErrorResponse(
       res,
       400,
-      "Không tồn tại projectId"
+      "ErrorSecurity"
     )
   }
 };
