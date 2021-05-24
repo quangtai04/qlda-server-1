@@ -6,6 +6,7 @@ const {
   getCurrentId,
 } = require("../../helper/responseHelper");
 const { use } = require("../../routers/usersRouter");
+const Project = require("../../model/projectModel");
 
 const maxAge = 3 * 24 * 60 * 60;
 const createToken = (id) => {
@@ -13,7 +14,16 @@ const createToken = (id) => {
     expiresIn: maxAge,
   });
 };
-
+exports.getNameAndAvatar = async (id) => {
+  let author = {};
+  let user = await User.findById({ _id: id });
+  if (user) {
+    author.authorId = user.toObject()._id;
+    author.name = user.toObject().username;
+    author.avatar = user.toObject().avatar;
+  }
+  return author;
+};
 module.exports.getUser = (req, res, next) => {};
 module.exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -117,6 +127,7 @@ module.exports.getUserInfo = async (req, res) => {
         200,
         {
           role: user.get("role"),
+          userId: user_id,
           avatar: user.get("avatar"),
           language: user.get("language"),
           email: user.get("email"),

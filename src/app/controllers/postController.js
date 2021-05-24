@@ -6,24 +6,27 @@ const {
 const Post = require("../../model/postModel");
 const User = require("../../model/userModel");
 const Project = require("../../model/projectModel");
+const Comment = require("../../model/commentModel");
+const { getListPosts } = require("./projectController");
 
 module.exports.addPost = async (req, res) => {
   let body = req.body;
-  let { authorId, projectId } = req.body;
+  let authorId = await getCurrentId(req);
+  body.authorId = authorId;
+  let { projectId } = req.body;
   try {
     let user = await User.findById(authorId);
     if (user) {
       let project = await Project.findById(projectId);
       if (project) {
         var post = new Post(body);
-
-        post.save(function (err, obj) {
+        post.save(async function (err, obj) {
           if (err) return handleErrorResponse(res, 400, null, "Add thất bại!");
-
+          var listPost = await getListPosts(projectId);
           return handleSuccessResponse(
             res,
             200,
-            { postID: post._id },
+            { post: listPost },
             "Add thành công!"
           );
         });
@@ -36,9 +39,15 @@ module.exports.addPost = async (req, res) => {
 module.exports.deletePost = async (req, res) => {
   let { postId } = req.body;
   if (postId) {
-    let post = await Post.findOneAndRemove({ _id: postId });
+    let post = await Post.findByIdAndRemove(postId);
     if (!post) return handleErrorResponse(res, 400, "Không tồn tại postID");
-    return handleSuccessResponse(res, 200, null, "Xóa thành công");
+    let listComment = await Comment.find({postId: postId});
+    for(var i=0; i<listComment.length; i++) {
+      await Comment.findByIdAndRemove(listComment[i]._id);
+    }
+    let projectId = post.projectId.toString();
+    let listPost = await getListPosts(projectId);
+    return handleSuccessResponse(res, 200, { post: listPost, projectId: projectId }, "Xóa thành công");
   } else {
     return handleErrorResponse(res, 400, "Không tồn tại postID");
   }
@@ -51,8 +60,10 @@ module.exports.updatePost = async (req, res) => {
     { content: content },
     { new: true }
   );
+  let projectId = post.projectId.toString();
+  let listPost = await getListPosts(projectId);
   if (!post) return handleErrorResponse(res, 400, "Không tồn tại postId");
-  return handleSuccessResponse(res, 200, null, "Cập nhật thành công");
+  return handleSuccessResponse(res, 200, {post: listPost, projectId: projectId}, "Cập nhật thành công");
 };
 module.exports.getComments = async (req, res) => {
   let { postId } = req.body;
@@ -65,5 +76,5 @@ module.exports.getComments = async (req, res) => {
       { commentList: commentList },
       "Lấy comments thành công!"
     );
-  }
+  } else return handleErrorResponse(res, 400, "Không tồn tại postID");
 };
