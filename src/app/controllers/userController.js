@@ -161,9 +161,9 @@ module.exports.getUserInfo = async (req, res) => {
 module.exports.getUserName = async function (req, res) {
   try {
     const userId = await getCurrentId(req);
-    const username = await (await User.findOne({ _id: userId })).get(
-      "username"
-    );
+    const username = await (
+      await User.findOne({ _id: userId })
+    ).get("username");
     return username;
   } catch (error) {
     throw Error(error.message);

@@ -3,13 +3,34 @@ var express = require("express");
 var path = require("path");
 var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
-const port = 3002;
 const config = require("./config");
 // var logger = require('morgan');
+const mongoose = require("mongoose");
+var dotenv = require("dotenv");
+dotenv.config();
+const port = process.env.PORT || 3002;
 
 // kết nối databse
-require("./src/loaders/database")();
-
+// local
+// require("./src/loaders/database")();
+// cloud
+const URL = process.env.DB_URL;
+mongoose
+  .connect(
+    "mongodb+srv://admin:admin@cluster0.pjldk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
+  .then(() => {
+    console.log("connected mongodb");
+    console.log("Server is running at -> http://localhost:" + port);
+  })
+  .catch((err) => {
+    console.log(URL);
+    console.log(err);
+  });
 // tạo các thư mục cần thiết
 // require('./loaders/mkdirs')();
 
@@ -20,7 +41,7 @@ var app = express();
 var cors = require("cors");
 app.use(
   cors({
-    origin: config.DOMAINNAME,
+    origin: ["https://qlda-project.netlify.app", "http://localhost:3001"],
     methods: "GET,POST,OPTIONS,PUT,PATCH,DELETE",
     allowedHeaders: "Content-Type,x-access-token,x-requested-with",
     optionsSuccessStatus: 200,
@@ -39,7 +60,7 @@ var server = require("http").Server(app);
 var io = require("./src/loaders/socket")(server);
 app.set("io", io);
 app.set("port", port);
-console.log("Server is running at -> http://localhost:" + port);
+// console.log("Server is running at -> http://localhost:" + port);
 server.listen(port);
 
 // app.listen(port, () => {
