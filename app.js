@@ -7,6 +7,7 @@ const config = require("./config");
 // var logger = require('morgan');
 const mongoose = require("mongoose");
 var dotenv = require("dotenv");
+// var session = require("express-session");
 dotenv.config();
 const port = process.env.PORT || 3002;
 
@@ -35,20 +36,48 @@ mongoose
 // require('./loaders/mkdirs')();
 
 var app = express();
+// app.enable("trust proxy");
+// app.use(
+//   session({
+//     secret: "yoursecret",
+//     domain: ".netlify.app",
+//     proxy: true,
+//     cookie: {
+//       path: "/",
+//       domain: ".netlify.app",
+//       maxAge: 1000 * 60 * 24, // 24 hours
+//     },
+//   })
+// );
 // app.use(logger('dev'));
 
 // cài đặt cors
 var cors = require("cors");
 app.use(
   cors({
-    origin: ["https://qlda-project.netlify.app", "http://localhost:3001"],
+    origin: [
+      "https://qlda-project.netlify.app",
+      "http://localhost:3001",
+      "http://localhost:5000",
+    ],
     methods: "GET,POST,OPTIONS,PUT,PATCH,DELETE",
     allowedHeaders: "Content-Type,x-access-token,x-requested-with",
     optionsSuccessStatus: 200,
     credentials: true,
   })
 );
-
+// app.set("trust proxy", 1);
+// app.use(
+//   session({
+//     secret: "Super Secret",
+//     resave: true,
+//     saveUninitialized: false,
+//     cookie: {
+//       sameSite: "none",
+//       secure: true,
+//     },
+//   })
+// );
 app.use(bodyParser.json());
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
