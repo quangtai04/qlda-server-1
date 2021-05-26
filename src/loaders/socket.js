@@ -53,7 +53,7 @@ module.exports = (server) => {
     })
     socket.on("disconnect", () => {
       for(var i=0; i<listOnline.length; i++) {
-        if(listOnline[i].socketId == socket.id) {
+        if(listOnline[i].socketId === socket.id) {
           listOnline.splice(i, 1);
           break;
         }

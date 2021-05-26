@@ -4,6 +4,7 @@ var path = require("path");
 var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
 const port = 3002;
+const config = require("./config");
 // var logger = require('morgan');
 
 // kết nối databse
@@ -19,7 +20,7 @@ var app = express();
 var cors = require("cors");
 app.use(
   cors({
-    origin: "http://localhost:3001",
+    origin: config.DOMAINNAME,
     methods: "GET,POST,OPTIONS,PUT,PATCH,DELETE",
     allowedHeaders: "Content-Type,x-access-token,x-requested-with",
     optionsSuccessStatus: 200,
