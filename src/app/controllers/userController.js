@@ -30,11 +30,16 @@ module.exports.loginUser = async (req, res) => {
   try {
     const user = await User.login(email, password);
     const token = createToken(user._id);
-    res.cookie("token", token, { httpOnly: false, maxAge: maxAge * 1000 });
+    res.cookie("token", token, {
+      httpOnly: false,
+      maxAge: maxAge * 1000,
+      // sameSite: "none",
+    });
+    // localStorage.setItem("token", "token123");
     return handleSuccessResponse(
       res,
       200,
-      { userId: user.id },
+      { userId: user.id, token: token },
       "Đăng nhập thành công !"
     );
   } catch (error) {
