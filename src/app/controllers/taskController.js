@@ -207,7 +207,7 @@ const {
               taskCreated: [], taskPlanned: [], taskInProgress: [], taskComplete: [], taskOverDeadline: [],
               totalPlenned: 0, totalInProgress: 0, totalComplete: 0, totalOverDeadline: 0, totalTask: listTask.length
           };
-          if(project.userId != memberId && project.userJoin.indexOf(memberId) === -1 ) {
+          if(project.userId != memberId && project.userJoin.indexOf(memberId) !== -1 ) {
               return handleErrorResponse(res, 400, "Không tồn tại member trong Project");
           }
           listTask.map((value, i) => {
