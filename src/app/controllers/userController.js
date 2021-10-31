@@ -14,6 +14,18 @@ const createToken = (id) => {
     expiresIn: maxAge,
   });
 };
+exports.deleteCurrentUser = async (req, res) => {
+  let message;
+  let id = await getCurrentId(req);
+  User.remove({ _id: id }, function (err) {
+    if (!err) {
+      message = "xóa thành công!";
+    } else {
+      message = "Xảy ra lỗi";
+    }
+  });
+  handleSuccessResponse(res, 200, { status: message });
+};
 exports.getNameAndAvatar = async (id) => {
   let author = {};
   let user = await User.findById({ _id: id });
