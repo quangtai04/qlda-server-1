@@ -1,12 +1,11 @@
-const User = require("../../model/userModel");
+const User = require("../model/userModel");
 const jwt = require("jsonwebtoken");
 const {
   handleErrorResponse,
   handleSuccessResponse,
   getCurrentId,
-} = require("../../helper/responseHelper");
-const { use } = require("../../routers/usersRouter");
-const Project = require("../../model/projectModel");
+} = require("../helper/responseHelper");
+const Project = require("../model/projectModel");
 
 const maxAge = 3 * 24 * 60 * 60;
 const createToken = (id) => {
