@@ -20,7 +20,7 @@ exports.getCurrentId = (req) => {
       req.query.token ||
       req.headers["x-access-token"] ||
       req.cookies.token;
-    if (token.search("token=") !== -1) {
+    if (token && token.search("token=") !== -1) {
       token = token.substring(token.search("token=") + 6);
     }
     if (!token) {

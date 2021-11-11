@@ -2,11 +2,11 @@ const {
   handleErrorResponse,
   handleSuccessResponse,
   getCurrentId,
-} = require("../../helper/responseHelper");
-const Comment = require("../../model/commentModel");
-const Post = require("../../model/postModel");
-const Project = require("../../model/projectModel");
-const User = require("../../model/userModel");
+} = require("../helper/responseHelper");
+const Comment = require("../model/commentModel");
+const Post = require("../model/postModel");
+const Project = require("../model/projectModel");
+const User = require("../model/userModel");
 const { getListPosts } = require("./projectController");
 
 module.exports.addComment = async (req, res) => {

@@ -2,11 +2,11 @@ const {
   handleErrorResponse,
   handleSuccessResponse,
   getCurrentId,
-} = require("../../helper/responseHelper");
-const Post = require("../../model/postModel");
-const User = require("../../model/userModel");
-const Project = require("../../model/projectModel");
-const Comment = require("../../model/commentModel");
+} = require("../helper/responseHelper");
+const Post = require("../model/postModel");
+const User = require("../model/userModel");
+const Project = require("../model/projectModel");
+const Comment = require("../model/commentModel");
 const { getListPosts } = require("./projectController");
 
 module.exports.addPost = async (req, res) => {
@@ -41,13 +41,18 @@ module.exports.deletePost = async (req, res) => {
   if (postId) {
     let post = await Post.findByIdAndRemove(postId);
     if (!post) return handleErrorResponse(res, 400, "Không tồn tại postID");
-    let listComment = await Comment.find({postId: postId});
-    for(var i=0; i<listComment.length; i++) {
+    let listComment = await Comment.find({ postId: postId });
+    for (var i = 0; i < listComment.length; i++) {
       await Comment.findByIdAndRemove(listComment[i]._id);
     }
     let projectId = post.projectId.toString();
     let listPost = await getListPosts(projectId);
-    return handleSuccessResponse(res, 200, { post: listPost, projectId: projectId }, "Xóa thành công");
+    return handleSuccessResponse(
+      res,
+      200,
+      { post: listPost, projectId: projectId },
+      "Xóa thành công"
+    );
   } else {
     return handleErrorResponse(res, 400, "Không tồn tại postID");
   }
@@ -63,7 +68,12 @@ module.exports.updatePost = async (req, res) => {
   let projectId = post.projectId.toString();
   let listPost = await getListPosts(projectId);
   if (!post) return handleErrorResponse(res, 400, "Không tồn tại postId");
-  return handleSuccessResponse(res, 200, {post: listPost, projectId: projectId}, "Cập nhật thành công");
+  return handleSuccessResponse(
+    res,
+    200,
+    { post: listPost, projectId: projectId },
+    "Cập nhật thành công"
+  );
 };
 module.exports.getComments = async (req, res) => {
   let { postId } = req.body;
