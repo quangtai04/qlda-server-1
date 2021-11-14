@@ -1,6 +1,7 @@
 const usersRouter = require("./usersRouter");
 const postRouter = require("./postRouter");
 const momoRouter = require("./momoRouter");
+const chatRouter = require("./chatRouter");
 const projectRouter = require("./projectRouter");
 const taskRouter = require("./taskRouter");
 const mailer = require("./mailRouter");
@@ -15,6 +16,7 @@ const {
 
 module.exports = (app) => {
   app.use("/api/momo", momoRouter);
+  app.use("/api/chat", chatRouter);
   app.use("/api/user", usersRouter);
   app.use("/api/post", postRouter);
   app.use("/api/project", projectRouter);
