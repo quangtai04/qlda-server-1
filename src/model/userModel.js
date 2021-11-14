@@ -40,7 +40,7 @@ var userSchema = Schema(
       default: [],
     },
     friendChat: {
-      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      type: [{ type: Schema.Types.ObjectId, ref: "Chat" }],
       default: [],
     },
     projects: {

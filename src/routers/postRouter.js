@@ -7,9 +7,9 @@ const authPost = require("../middleware/postMiddleware");
 //router
 router.use(authUser);
 router.use(authPost);
+router.get("/getPost", postController.getPosts);
 router.post("/addPost", postController.addPost);
 router.post("/deletePost", postController.deletePost);
 router.post("/updatePost", postController.updatePost);
 router.post("/getComment", postController.getComments);
-
 module.exports = router;

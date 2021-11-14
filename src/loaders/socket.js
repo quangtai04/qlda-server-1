@@ -27,7 +27,6 @@ module.exports = (server) => {
       io.of("project").to(data.roomId).emit("loadPost", { data: data });
     });
     socket.on("chatting", (data) => {
-      console.log("hihhihi");
       io.of("project").to(data.roomId).emit("loadChat", { data: data });
     });
     socket.on("addTask", (data) => {
