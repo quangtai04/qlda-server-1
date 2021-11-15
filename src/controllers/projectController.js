@@ -9,6 +9,21 @@ const User = require("../model/userModel");
 const Comment = require("../model/commentModel");
 const Task = require("../model/taskModel");
 const { getNameAndAvatar } = require("./userController");
+const sectionController = require("./sectionController");
+
+const addSectionDefault = async (userId, projectId) => {
+  const listSection = ["Planning", "To do", "Completed"];
+  listSection.forEach(async (sec, index) => {
+    await sectionController.addNewSection(
+      {
+        authorId: userId,
+        projectId: projectId,
+        name: sec,
+      },
+      (err, obj, section) => {}
+    );
+  });
+};
 
 module.exports.addProject = async (req, res) => {
   // var io = req.app.get("io");
@@ -25,6 +40,7 @@ module.exports.addProject = async (req, res) => {
           return handleErrorResponse(res, 400, null, "Add project thất bại!");
         }
         user.projects.push(project._id);
+        addSectionDefault(userId, project._id);
         await user.save();
         return handleSuccessResponse(
           res,
@@ -62,7 +78,6 @@ module.exports.joinProject = async (req, res) => {
     return handleErrorResponse(res, 400, "Join project thất bại!");
   }
 };
-
 
 module.exports.deleteProject = async (req, res) => {
   let { projectId } = req.body;

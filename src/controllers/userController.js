@@ -4,6 +4,7 @@ const {
   handleErrorResponse,
   handleSuccessResponse,
   getCurrentId,
+  test,
 } = require("../helper/responseHelper");
 const Project = require("../model/projectModel");
 
@@ -184,4 +185,7 @@ module.exports.getUserName = async function (req, res) {
   } catch (error) {
     throw Error(error.message);
   }
+};
+module.exports.test = async function (req, res) {
+  return test(res);
 };

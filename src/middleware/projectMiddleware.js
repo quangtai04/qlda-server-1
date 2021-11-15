@@ -5,7 +5,7 @@ const {
 const Project = require("../model/projectModel");
 module.exports = async (req, res, next) => {
   let userId = await getCurrentId(req);
-  let { projectId } = req.body;
+  let { projectId } = req.body.projectId ? req.body : req.query;
   let project = await Project.findById(projectId);
   if (project) {
     // Kiểm tra xem user có quyền truy cập Project hay không

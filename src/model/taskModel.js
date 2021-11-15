@@ -15,7 +15,7 @@ var taskSchema = Schema(
       type: [{ type: Schema.Types.ObjectId, ref: "File" }],
       default: [],
     },
-    deadline: { type: Date },
+    dueDate: { from: { type: Date }, to: { type: Date } },
   },
   { timestamps: true }
 );

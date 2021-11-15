@@ -5,12 +5,12 @@ const authUser = require("../middleware/userMiddleware");
 const authProj = require("../middleware/projectMiddleware");
 //router
 router.use(authUser);
-router.post("/getAllTaskUser", taskController.getAllTaskUser);
+// router.post("/getAllTaskUser", taskController.getAllTaskUser);
 router.use(authProj);
 router.post("/addTask", taskController.addTask);
-router.post("/getTask", taskController.getTask);
+router.get("/getTasks", taskController.getTasks);
 router.post("/updateTask", taskController.updateTask);
-router.post("/deleteTask", taskController.deleteTask);
-router.post("/analysis", taskController.analysis);
-router.post("/getTaskUser", taskController.getTaskUser);
+// router.post("/deleteTask", taskController.deleteTask);
+// router.post("/analysis", taskController.analysis);
+// router.post("/getTaskUser", taskController.getTaskUser);
 module.exports = router;
