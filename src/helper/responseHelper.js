@@ -48,3 +48,9 @@ exports.handleErrorResponse = async function (
     error: message,
   });
 };
+
+exports.test = async function (res) {
+  return res
+    .status(200)
+    .send({ data: { data2: [{ message: "1" }, { message: "2" }] } });
+};
