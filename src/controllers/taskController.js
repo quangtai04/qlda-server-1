@@ -25,7 +25,8 @@ exports.checkAuthor = async (res, userId, taskId) => {
 };
 
 module.exports.addTask = async (req, res) => {
-  //req: {sectionId, projectId, dependencies: [], assignment: [], name, files , dueDate: {from: Date, to: Date}}
+  //req: {sectionId, projectId, dependencies: [], assignment: [],
+  //      name, files , dueDate: {from: Date, to: Date}, isDone, status, priority}
   let userId = await getCurrentId(req);
   let body = req.body;
   try {
@@ -45,6 +46,9 @@ module.exports.addTask = async (req, res) => {
       name: body.name,
       files: [],
       dueDate: body.dueDate,
+      isDone: body.isDone !== undefined ? body.isDone : false,
+      status: body.status || 0,
+      priority: body.priority || 0,
     });
     task.save(async (err, obj) => {
       if (err) {
@@ -66,7 +70,19 @@ module.exports.addTask = async (req, res) => {
         await Project.findById(req.body.projectId)
           .populate({
             path: "sections",
-            populate: { path: "tasks" },
+            populate: [
+              {
+                path: "tasks",
+                populate: {
+                  path: "authorId",
+                  select: "avatar _id email username",
+                },
+              },
+              {
+                path: "authorId",
+                select: "avatar _id email username",
+              },
+            ],
           })
           .then((project) => {
             if (!project) {
@@ -98,7 +114,16 @@ module.exports.getTasks = async (req, res) => {
     await Project.findById(req.query.projectId)
       .populate({
         path: "sections",
-        populate: { path: "tasks" },
+        populate: [
+          {
+            path: "tasks",
+            populate: { path: "authorId", select: "avatar _id email username" },
+          },
+          {
+            path: "authorId",
+            select: "avatar _id email username",
+          },
+        ],
       })
       .then((project) => {
         if (!project) {

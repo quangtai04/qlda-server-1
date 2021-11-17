@@ -16,6 +16,9 @@ var taskSchema = Schema(
       default: [],
     },
     dueDate: { from: { type: Date }, to: { type: Date } },
+    isDone: { type: Boolean, default: false },
+    priority: { type: Number, default: 0 },
+    status: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
