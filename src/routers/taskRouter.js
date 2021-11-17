@@ -10,7 +10,7 @@ router.use(authProj);
 router.post("/addTask", taskController.addTask);
 router.get("/getTasks", taskController.getTasks);
 router.post("/updateTask", taskController.updateTask);
-// router.post("/deleteTask", taskController.deleteTask);
+router.post("/deleteTask", taskController.deleteTask);
 // router.post("/analysis", taskController.analysis);
 // router.post("/getTaskUser", taskController.getTaskUser);
 module.exports = router;
