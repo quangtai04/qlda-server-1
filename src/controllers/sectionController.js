@@ -178,7 +178,11 @@ module.exports.deleteSection = async (req, res) => {
           taskController.deleteTaskById(
             { taskId: taskId },
             false,
-            (err, obj, section) => {}
+            (err, obj, section) => {
+              if (err) {
+                return handleErrorResponse("Một lỗi không mong muốn đã xảy ra");
+              }
+            }
           );
         });
         return handleSuccessResponse(res, 200, {}, "Thành công");

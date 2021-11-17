@@ -10,6 +10,33 @@ const Comment = require("../model/commentModel");
 const Task = require("../model/taskModel");
 const { getNameAndAvatar } = require("./userController");
 const sectionController = require("./sectionController");
+const { RoleProject } = require("../helper/role");
+
+exports.getRole = async (res, userId, projectId) => {
+  let project = await Project.findById(projectId);
+  if (!project) {
+    return handleErrorResponse(res, 400, "Không tồn tại project");
+  }
+  let role = [];
+  if (project.userAdmin.indexOf(userId) !== -1) {
+    role.push(RoleProject.Admin);
+  }
+  if (project.users.indexOf(userId) !== -1) {
+    role.push(RoleProject.User);
+  }
+  return role;
+};
+
+exports.checkAdmin = async (res, userId, projectId) => {
+  let project = await Project.findById(projectId);
+  if (!project) {
+    return handleErrorResponse(res, 400, "Không tồn tại project");
+  }
+  if (project.userAdmin.indexOf(userId) !== -1) {
+    return true;
+  }
+  return false;
+};
 
 const addSectionDefault = async (userId, projectId) => {
   const listSection = ["Planning", "To do", "Completed"];
@@ -55,6 +82,7 @@ module.exports.addProject = async (req, res) => {
   }
 };
 module.exports.joinProject = async (req, res) => {
+  // req: {projectId, userId (người được mời)}
   let { userId, projectId } = req.body;
   try {
     let project = await Project.findById(projectId);
