@@ -29,9 +29,9 @@ module.exports = (server) => {
     socket.on("chatting", (data) => {
       io.of("project").to(data.roomId).emit("loadChat", { data: data });
     });
-    socket.on("addTask", (data) => {
-      io.of("project").to(data.roomId).emit("reloadTask", { data: data });
-    });
+    // socket.on("addTask", (data) => {
+    //   io.of("project").to(data.roomId).emit("reloadTask", { data: data });
+    // });
     socket.on("online", (data) => {
       socket.join(data.roomId);
       listOnline.push({ socketId: socket.id, userId: data.userId });
