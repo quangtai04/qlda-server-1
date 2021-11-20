@@ -81,6 +81,12 @@ module.exports.addProject = async (req, res) => {
     return handleErrorResponse(res, 401, "Không tìm thấy User!");
   }
 };
+/**
+ *
+ * @param {* projectId, userId} req
+ * @param {*} res
+ * @returns
+ */
 module.exports.joinProject = async (req, res) => {
   // req: {projectId, userId (người được mời)}
   let { userId, projectId } = req.body;
@@ -158,7 +164,7 @@ module.exports.getProject = async (req, res) => {
     await User.findById(userId)
       .populate("projects")
       .then((result) => {
-        return handleSuccessResponse(res, 200, result, "Thành công");
+        return handleSuccessResponse(res, 200, result.projects, "Thành công");
       })
       .catch((err) => {
         console.log(err);
@@ -232,7 +238,7 @@ module.exports.getUserJoin = async (req, res) => {
       console.log(err);
     });
   if (project) {
-    let listUser = project.userJoin;
+    let listUser = project.users;
     listUser.push(project.userId);
     let listProfile = [];
     return handleSuccessResponse(
