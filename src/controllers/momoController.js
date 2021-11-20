@@ -6,8 +6,8 @@ module.exports.payment = async (req, res) => {
   var requestId = partnerCode + new Date().getTime();
   var orderId = requestId;
   var orderInfo = "pay with MoMo";
-  var redirectUrl = "https://momo.vn/return";
-  var ipnUrl = "https://callback.url/notify";
+  var redirectUrl = callBackPayment().toString();
+  var ipnUrl = callBackPayment().toString();
   // var ipnUrl = redirectUrl = "https://webhook.site/454e7b77-f177-4ece-8236-ddf1c26ba7f8";
   var amount = req.query.amount ? req.query.amount : "50000";
   var requestType = "captureWallet";
@@ -96,4 +96,7 @@ module.exports.payment = async (req, res) => {
   });
   reqMomo.write(requestBody);
   reqMomo.end();
+};
+const callBackPayment = () => {
+  return "http://localhost:3001/status-payment";
 };

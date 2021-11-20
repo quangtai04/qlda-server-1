@@ -8,12 +8,19 @@ const User = require("../model/userModel");
 const Project = require("../model/projectModel");
 const Comment = require("../model/commentModel");
 
-const getListPost = async (projectId) => {
+exports.getListPost = async (projectId) => {
   var listPost = [];
   await Project.findById(projectId)
     .populate({
       path: "posts",
-      populate: { path: "authorId", select: ["username", "avatar"] },
+      populate: [
+        {
+          path: "comments",
+          select: ["authorId", "content"],
+          populate: [{ path: "authorId", select: ["username", "avatar"] }],
+        },
+        { path: "authorId", select: ["username", "avatar"] },
+      ],
     })
     .then((project) => {
       listPost = project.posts;
@@ -38,7 +45,7 @@ module.exports.addPost = async (req, res) => {
         .then(async (project) => {
           project.posts.push(post);
           await project.save();
-          getListPost(projectId).then((listPost) => {
+          this.getListPost(projectId).then((listPost) => {
             return handleSuccessResponse(res, 200, listPost, "Thành công");
           });
         });
@@ -53,7 +60,10 @@ module.exports.deletePost = async (req, res) => {
     let post = await Post.findByIdAndRemove(postId);
     if (!post) return handleErrorResponse(res, 400, "Không tồn tại postID");
     await Project.findById(post.projectId)
-      .populate("posts")
+      .populate({
+        path: "posts",
+        populate: { path: "authorId", select: ["username", "avatar"] },
+      })
       .then(async (project) => {
         project.posts.push(post);
         project.posts.splice(project.posts.indexOf(post._id), 1);
@@ -100,19 +110,9 @@ module.exports.getComments = async (req, res) => {
 module.exports.getPosts = async (req, res) => {
   let { projectId } = req.query;
   try {
-    await Project.findById(projectId)
-      .populate({
-        path: "posts",
-        populate: { path: "authorId", select: ["username", "avatar"] },
-      })
-      .then(async (project) => {
-        return handleSuccessResponse(
-          res,
-          200,
-          project.posts,
-          "Lấy danh sách thành công!"
-        );
-      });
+    this.getListPost(projectId).then((listPost) => {
+      return handleSuccessResponse(res, 200, listPost, "Thành công");
+    });
   } catch (error) {
     return handleErrorResponse(res, 401, error);
   }
