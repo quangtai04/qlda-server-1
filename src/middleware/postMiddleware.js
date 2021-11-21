@@ -10,8 +10,8 @@ module.exports = async (req, res, next) => {
   let userId = await getCurrentId(req);
   let { postId } = req.body;
   if (postId !== undefined) {
-    let projectId = await (await Post.findById(postId)).get("projectId");
-    let project = await Project.findById(projectId);
+    let post = await Post.findById(postId);
+    let project = await Project.findById(post.projectId);
     if (project) {
       if (project.users.indexOf(userId) !== -1) {
         next();

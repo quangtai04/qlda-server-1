@@ -114,6 +114,9 @@ module.exports.addTask = async (req, res) => {
           return handleSuccessResponse(res, 200, data, "Thành công");
         });
       });
+      // fetch("http://localhost:3003/api/github")
+      //   .then((res) => res.json())
+      //   .then((json) => {});
     });
   } catch (err) {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");

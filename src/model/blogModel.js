@@ -7,6 +7,10 @@ var blogSchema = Schema(
     security: { type: String, default: "Public" },
     content: { type: String },
     categoryId: { type: Schema.Types.ObjectId, ref: "Category" },
+    comments: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

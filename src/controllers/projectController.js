@@ -229,26 +229,14 @@ module.exports.getChatProject = async (req, res) => {
 };
 module.exports.getUserJoin = async (req, res) => {
   let { projectId } = req.body;
-  let project = await Project.findById(projectId)
+  await Project.findById(projectId)
     .populate("users")
     .then((result) => {
       return handleSuccessResponse(res, 200, result, "Thành công");
     })
     .catch((err) => {
-      console.log(err);
+      return handleErrorResponse(res, 400, "Thất bại");
     });
-  if (project) {
-    let listUser = project.users;
-    listUser.push(project.userId);
-    let listProfile = [];
-    return handleSuccessResponse(
-      res,
-      200,
-      { listUser: listProfile },
-      "Thành công"
-    );
-  }
-  return handleErrorResponse(res, 400, "Thất bại");
 };
 module.exports.setAdmin = async (req, res) => {
   let { projectId, memberId } = req.body;
