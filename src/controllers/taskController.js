@@ -48,10 +48,47 @@ exports.getAllTasks = async (projectId, callback) => {
     .then((project) => {
       if (!project) {
         callback("Không tồn tại project", null);
+        return;
       }
       callback(null, project.sections);
     });
 };
+/**
+ * get Task by taskId
+ * @param {*} taskId
+ * @param {*} callback(err, task)
+ */
+exports.getTaskById = async (taskId, callback) => {
+  await Task.findById(taskId)
+    .populate([
+      {
+        path: "authorId",
+        select: "avatar _id email username",
+      },
+      {
+        path: "dependenciesTask",
+        populate: {
+          path: "authorId",
+          select: "avatar _id email username",
+        },
+      },
+    ])
+    .then((task) => {
+      if (!task) {
+        callback("Không tồn tại task", null);
+        return;
+      }
+      callback(null, task);
+    });
+};
+
+/**
+ * Check user is author of task
+ * @param {*} res
+ * @param {*} userId
+ * @param {*} taskId
+ * @returns
+ */
 
 exports.checkAuthor = async (res, userId, taskId) => {
   let task = await Task.findById(taskId);
@@ -150,7 +187,7 @@ module.exports.getTasks = async (req, res) => {
 
 /**
  * getTask: req.query: projectId, taskId
- * @param {projectId} req
+ * @param {projectId, taskId} req
  * @param {*} res
  * @returns
  */
@@ -162,23 +199,12 @@ module.exports.getTask = async (req, res) => {
     if (!user) {
       return handleErrorResponse(res, 400, "Không tồn tại tài khoản");
     }
-    await Task.findById(taskId)
-      .populate([
-        {
-          path: "author",
-          select: "avatar _id email username",
-        },
-        {
-          path: "dependenciesTask",
-          populate: {
-            path: "authorId",
-            select: "avatar _id email username",
-          },
-        },
-      ])
-      .then((task) => {
-        return handleSuccessResponse(res, 200, task, "Thành công");
-      });
+    this.getTaskById(taskId, (err, task) => {
+      if (err) {
+        return handleErrorResponse(res, 400, err);
+      }
+      return handleSuccessResponse(res, 200, task, "Thành công");
+    });
   } catch (err) {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
@@ -187,7 +213,7 @@ module.exports.getTask = async (req, res) => {
  * Change task from section_1 to section_2
  * @param { projectId, taskId, sectionId1: old, sectionId2: new , index?: number} req
  * @param {*} res
- * @returns
+ * @returns allTasks: data, taskUpdate: task
  */
 module.exports.changeSection = async (req, res) => {
   let { taskId, sectionId1, sectionId2, index } = req.body;
@@ -203,45 +229,68 @@ module.exports.changeSection = async (req, res) => {
     if (!user) {
       return handleErrorResponse(res, 400, "Không tồn tại user");
     }
-    let task = await Task.findById(taskId);
-    if (!task) {
-      return handleErrorResponse(res, 400, "Không tồn tại task");
-    }
     let section1 = await Section.findById(sectionId1);
     let section2 = await Section.findById(sectionId2);
     if (!section1 || !section2) {
-      return handleErrorResponse("Không tồn tại section");
+      return handleErrorResponse(res, 400, "Không tồn tại section");
     }
     if (section1.tasks.indexOf(taskId) === -1) {
       return handleErrorResponse(res, 400, "Không tồn tại task trong section");
     }
-    task.sectionId = sectionId2;
-    await task.save();
-    section1.tasks.splice(section1.tasks.indexOf(taskId), 1);
-    await section1.save();
-    if (index) {
-      section1.tasks = [
-        section2.tasks.splice(0, index),
-        taskId,
-        section2.splice(index),
-      ];
-    } else {
-      section2.tasks.push(taskId);
-    }
-    await section2.save((err, obj) => {
-      if (err)
-        return handleErrorResponse(
-          res,
-          400,
-          "Một lỗi không mong muốn đã xảy ra"
-        );
-      this.getAllTasks(req.body.projectId, (err, data) => {
-        if (err) {
-          return handleErrorResponse(res, 400, err);
-        }
-        return handleSuccessResponse(res, 200, data, "Thành công");
-      });
+    this.getTaskById(taskId, async (err, task) => {
+      if (err) {
+        return handleErrorResponse(res, 400, err);
+      }
+      if (sectionId1 === sectionId2 && typeof index === "number") {
+        section2.tasks.splice(section2.tasks.indexOf(taskId), 1);
+        section2.tasks = [
+          ...section2.tasks.splice(0, index),
+          taskId,
+          ...section2.tasks.splice(index),
+        ];
+        saveSection(task);
+      } else if (sectionId1 !== sectionId2) {
+        task.sectionId = sectionId2;
+        await task.save();
+        section1.tasks.splice(section1.tasks.indexOf(taskId), 1);
+        await section1.save(async (err, obj) => {
+          if (typeof index === "number") {
+            let tasksId1 = [...section2.tasks];
+            let tasksId2 = [...section2.tasks];
+            section2.tasks = [
+              ...tasksId1.splice(0, index),
+              taskId,
+              ...tasksId2.splice(index),
+            ];
+          } else {
+            section2.tasks.push(taskId);
+          }
+          saveSection(task);
+        });
+      }
     });
+    let saveSection = async (task) => {
+      await section2.save((err, obj) => {
+        if (err) {
+          return handleErrorResponse(
+            res,
+            400,
+            "Một lỗi không mong muốn đã xảy ra"
+          );
+        }
+        this.getAllTasks(req.body.projectId, (err, data) => {
+          if (err) {
+            return handleErrorResponse(res, 400, err);
+          }
+          return handleSuccessResponse(
+            res,
+            200,
+            { allTasks: data, taskUpdate: task },
+            "Thành công"
+          );
+        });
+      });
+    };
   } catch (err) {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
@@ -249,10 +298,10 @@ module.exports.changeSection = async (req, res) => {
 
 /**
  *
- * @param {projectId, taskId, dependencies?, assignment?: String[], name?, files?,
- *        dueDate?: {from: Date, to: Date}, isDone?: boolean, status?, priority?} req
+ * @param {*} req projectId, taskId, dependencies?, assignment?: String[], name?, files?,
+ *        dueDate?: {from: Date, to: Date}, isDone?: boolean, status?, priority?
  * @param {*} res
- * @returns
+ * @returns { * } allTasks: data, taskUpdate: task
  */
 module.exports.updateTask = async (req, res) => {
   let userId = await getCurrentId(req);
@@ -279,8 +328,9 @@ module.exports.updateTask = async (req, res) => {
     if (req.body.files) task.files = [...req.body.files];
     if (req.body.dueDate) task.dueDate = req.body.dueDate;
     if (req.body.isDone) task.isDone = req.body.isDone;
-    if (req.body.priority) task.priority = req.body.priority;
-    if (req.body.status) task.body.status = req.body.status;
+    if (typeof req.body.priority === "number")
+      task.priority = req.body.priority;
+    if (typeof req.body.status === "number") task.status = req.body.status;
     task.save(async (err, obj) => {
       if (err) {
         return handleErrorResponse(
@@ -293,7 +343,14 @@ module.exports.updateTask = async (req, res) => {
         if (err) {
           return handleErrorResponse(res, 400, err);
         }
-        return handleSuccessResponse(res, 200, data, "Thành công");
+        this.getTaskById(taskId, (err, taskSave) => {
+          return handleSuccessResponse(
+            res,
+            200,
+            { allTasks: data, taskUpdate: taskSave },
+            "Thành công"
+          );
+        });
       });
     });
   } catch (err) {
@@ -339,7 +396,10 @@ module.exports.deleteTask = async (req, res) => {
           "Một lỗi không mong muốn đã xảy ra"
         );
       }
-      return handleSuccessResponse(res, 200, {}, "Thành công");
+      this.getAllTasks(req.body.projectId, (err, allTasks) => {
+        if (err) return handleErrorResponse(res, 400, err);
+        return handleSuccessResponse(res, 200, allTasks, "Thành công");
+      });
     });
   } catch (err) {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");

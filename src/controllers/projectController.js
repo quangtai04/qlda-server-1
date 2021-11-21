@@ -47,7 +47,7 @@ const addSectionDefault = async (userId, projectId) => {
         projectId: projectId,
         name: sec,
       },
-      (err, obj, section) => {}
+      (err, allTasks) => {}
     );
   });
 };
@@ -237,6 +237,18 @@ module.exports.getUserJoin = async (req, res) => {
     .catch((err) => {
       return handleErrorResponse(res, 400, "Thất bại");
     });
+  if (project) {
+    let listUser = project.users;
+    listUser.push(project.userId);
+    let listProfile = [];
+    return handleSuccessResponse(
+      res,
+      200,
+      { listUser: listProfile },
+      "Thành công"
+    );
+  }
+  return handleErrorResponse(res, 400, "Thất bại");
 };
 module.exports.setAdmin = async (req, res) => {
   let { projectId, memberId } = req.body;
