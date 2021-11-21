@@ -9,6 +9,11 @@ const Section = require("../model/sectionModel");
 const User = require("../model/userModel");
 const taskController = require("../controllers/taskController");
 
+/**
+ *
+ * @param {*} params
+ * @param {*} callback (err, obj, allTasks)
+ */
 exports.addNewSection = async (params, callback) => {
   // {authorId, projectId, name}
   let project = await Project.findById(params.projectId);
@@ -20,11 +25,23 @@ exports.addNewSection = async (params, callback) => {
       tasks: [],
     });
     section.save(async function (err, obj) {
-      if (!err) {
-        project.sections.push(section._id);
-        await project.save();
+      if (err) {
+        callback("Một lỗi không mong muốn đã xảy ra", null);
+        return;
       }
-      callback(err, obj, section);
+      project.sections.push(section._id);
+      await project.save(async (err, obj) => {
+        if (err) {
+          callback("Một lỗi không mong muốn đã xảy ra", null);
+        }
+        taskController.getAllTasks(params.projectId, (err, allTasks) => {
+          if (err) {
+            callback(err, null);
+            return;
+          }
+          callback(null, allTasks);
+        });
+      });
     });
   } else {
     throw Error("Không tồn tại project");
@@ -52,7 +69,7 @@ module.exports.addSection = async (req, res) => {
             projectId: projectId,
             name: body.name,
           },
-          async (err, obj, section) => {
+          async (err, allTasks) => {
             if (err) {
               return handleErrorResponse(
                 res,
@@ -64,7 +81,7 @@ module.exports.addSection = async (req, res) => {
             return handleSuccessResponse(
               res,
               200,
-              section,
+              allTasks,
               "Add section thành công!"
             );
           }
@@ -173,19 +190,25 @@ module.exports.deleteSection = async (req, res) => {
         project.sections.splice(
           project.sections.indexOf(req.body.sectionId, 1)
         );
-        project.save();
-        query.tasks.forEach((taskId, i) => {
-          taskController.deleteTaskById(
-            { taskId: taskId },
-            false,
-            (err, obj, section) => {
-              if (err) {
-                return handleErrorResponse("Một lỗi không mong muốn đã xảy ra");
+        project.save((err, object) => {
+          query.tasks.forEach((taskId, i) => {
+            taskController.deleteTaskById(
+              { taskId: taskId },
+              false,
+              (err, obj, section) => {
+                if (err) {
+                  return handleErrorResponse(
+                    "Một lỗi không mong muốn đã xảy ra"
+                  );
+                }
               }
-            }
-          );
+            );
+          });
+          taskController.getAllTasks(projectId, (err, allTasks) => {
+            if (err) return handleErrorResponse(res, 400, err);
+            return handleSuccessResponse(res, 200, allTasks, "Thành công");
+          });
         });
-        return handleSuccessResponse(res, 200, {}, "Thành công");
       } else {
         return handleErrorResponse(res, 400, "Không thể xóa section");
       }
