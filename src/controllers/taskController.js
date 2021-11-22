@@ -19,6 +19,7 @@ const projectController = require("../controllers/projectController");
  * @param {*} callback
  */
 exports.getAllTasks = async (projectId, callback) => {
+  let selectAuthor = "avatar _id email username role";
   await Project.findById(projectId)
     .populate({
       path: "sections",
@@ -28,20 +29,24 @@ exports.getAllTasks = async (projectId, callback) => {
           populate: [
             {
               path: "authorId",
-              select: "avatar _id email username",
+              select: selectAuthor,
+            },
+            {
+              path: "assignment",
+              select: selectAuthor,
             },
             {
               path: "dependenciesTask",
               populate: {
                 path: "authorId",
-                select: "avatar _id email username",
+                select: selectAuthor,
               },
             },
           ],
         },
         {
           path: "authorId",
-          select: "avatar _id email username",
+          select: selectAuthor,
         },
       ],
     })
@@ -63,6 +68,10 @@ exports.getTaskById = async (taskId, callback) => {
     .populate([
       {
         path: "authorId",
+        select: "avatar _id email username",
+      },
+      {
+        path: "assignment",
         select: "avatar _id email username",
       },
       {
@@ -103,7 +112,7 @@ exports.checkAuthor = async (res, userId, taskId) => {
 
 module.exports.addTask = async (req, res) => {
   //req: {sectionId, projectId, dependencies: [], assignment: [],
-  //      name, files , dueDate: {from: Date, to: Date}, isDone, status, priority}
+  //      name, description, files , dueDate: {from: Date, to: Date}, isDone, status, priority}
   let userId = await getCurrentId(req);
   let body = req.body;
   try {
@@ -123,12 +132,14 @@ module.exports.addTask = async (req, res) => {
       name: body.name,
       files: [],
       dueDate: body.dueDate,
+      description: body.description,
       isDone: body.isDone !== undefined ? body.isDone : false,
       status: body.status || 0,
       priority: body.priority || 0,
     });
     task.save(async (err, obj) => {
       if (err) {
+        console.log(err);
         return handleErrorResponse(
           res,
           400,
@@ -156,6 +167,7 @@ module.exports.addTask = async (req, res) => {
       //   .then((json) => {});
     });
   } catch (err) {
+    console.log(err);
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
 };
@@ -298,7 +310,7 @@ module.exports.changeSection = async (req, res) => {
 
 /**
  *
- * @param {*} req projectId, taskId, dependencies?, assignment?: String[], name?, files?,
+ * @param {*} req projectId, taskId, dependencies?, assignment?: String[], name?, description, files?,
  *        dueDate?: {from: Date, to: Date}, isDone?: boolean, status?, priority?
  * @param {*} res
  * @returns { * } allTasks: data, taskUpdate: task
@@ -327,7 +339,9 @@ module.exports.updateTask = async (req, res) => {
     if (req.body.name) task.name = req.body.name;
     if (req.body.files) task.files = [...req.body.files];
     if (req.body.dueDate) task.dueDate = req.body.dueDate;
-    if (req.body.isDone) task.isDone = req.body.isDone;
+    if (req.body.isDone !== undefined) task.isDone = req.body.isDone;
+    if (req.body.description !== undefined)
+      task.description = req.body.description;
     if (typeof req.body.priority === "number")
       task.priority = req.body.priority;
     if (typeof req.body.status === "number") task.status = req.body.status;
@@ -354,10 +368,133 @@ module.exports.updateTask = async (req, res) => {
       });
     });
   } catch (err) {
+    console.log(err);
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+/**
+ * add assignment to task
+ * @param {*} req {projectId, taskId, assignmentId}
+ * @param {*} res
+ */
+module.exports.addAssignment = async (req, res) => {
+  let { projectId, taskId, assignmentId } = req.body;
+  let userId = await getCurrentId(req);
+  try {
+    let user = await User.findById(userId);
+    if (
+      !user ||
+      (!this.checkAuthor(res, userId, taskId) &&
+        !projectController.checkAdmin(res, userId, projectId))
+    ) {
+      return handleErrorResponse(res, 400, "Không có quyền truy cập");
+    }
+    let task = await Task.findById(taskId);
+    if (!task) {
+      return handleErrorResponse(res, 400, "Không tồn tại task");
+    }
+    let assignment = await User.findById(assignmentId);
+    if (!assignment) {
+      return handleErrorResponse(res, 400, "Không tồn tại user");
+    }
+    let project = await Project.findById(projectId);
+    if (project.users.indexOf(assignmentId) === -1) {
+      return handleErrorResponse(res, 400, "User không nằm trong project");
+    }
+    if (task.assignment.indexOf(assignmentId) !== -1) {
+      return handleErrorResponse(res, 400, "User đã được thêm vào task");
+    }
+    task.assignment.push(assignmentId);
+    task.save((err, obj) => {});
+    assignment.tasks.push(taskId);
+    assignment.save((err, obj) => {
+      if (err) {
+        return handleErrorResponse(
+          res,
+          400,
+          "Một lỗi không mong muốn đã xảy ra"
+        );
+      }
+      this.getTaskById(taskId, (err, _task) => {
+        this.getAllTasks(projectId, (err, data) => {
+          return handleSuccessResponse(
+            res,
+            200,
+            { allTasks: data, updateTask: _task },
+            "Thành công"
+          );
+        });
+      });
+    });
+  } catch (err) {
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+/**
+ * remove assignment to task
+ * @param {*} req {projectId, taskId, assignmentId}
+ * @param {*} res {allTasks: Array<Task>, updateTask: Task}
+ */
+module.exports.deleteAssignment = async (req, res) => {
+  let { projectId, taskId, assignmentId } = req.body;
+  let userId = await getCurrentId(req);
+  try {
+    let user = await User.findById(userId);
+    if (
+      !user ||
+      (!this.checkAuthor(res, userId, taskId) &&
+        !projectController.checkAdmin(res, userId, projectId))
+    ) {
+      return handleErrorResponse(res, 400, "Không có quyền truy cập");
+    }
+    let task = await Task.findById(taskId);
+    if (!task) {
+      return handleErrorResponse(res, 400, "Không tồn tại task");
+    }
+    let assignment = await User.findById(assignmentId);
+    if (!assignment) {
+      return handleErrorResponse(res, 400, "Không tồn tại user");
+    }
+    let project = await Project.findById(projectId);
+    if (project.users.indexOf(assignmentId) === -1) {
+      return handleErrorResponse(res, 400, "User không nằm trong project");
+    }
+    if (task.assignment.indexOf(assignmentId) === -1) {
+      return handleErrorResponse(res, 400, "User chưa được thêm vào task");
+    }
+    task.assignment.splice(task.assignment.indexOf(assignmentId), 1);
+    task.save();
+    assignment.tasks.splice(assignment.tasks.indexOf(taskId), 1);
+    assignment.save((err, obj) => {
+      if (err) {
+        return handleErrorResponse(
+          res,
+          400,
+          "Một lỗi không mong muốn đã xảy ra"
+        );
+      }
+      this.getTaskById(taskId, (err, _task) => {
+        this.getAllTasks(projectId, (err, data) => {
+          return handleSuccessResponse(
+            res,
+            200,
+            { allTasks: data, updateTask: _task },
+            "Thành công"
+          );
+        });
+      });
+    });
+  } catch (err) {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
 };
 
+/**
+ *
+ * @param {*} params
+ * @param {*} deleteInSection
+ * @param {*} callback
+ */
 exports.deleteTaskById = async (params, deleteInSection, callback) => {
   // params: {taskId}
   let task = await Task.findByIdAndRemove(params.taskId);
