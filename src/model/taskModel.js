@@ -17,8 +17,10 @@ var taskSchema = Schema(
     },
     dueDate: { from: { type: Date }, to: { type: Date } },
     isDone: { type: Boolean, default: false },
-    priority: { type: Number, default: 0 },
-    status: { type: Number, default: 0 },
+    labels: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Label" }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

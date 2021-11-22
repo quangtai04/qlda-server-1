@@ -29,6 +29,10 @@ var projectSchema = Schema(
       type: [{ type: Schema.Types.ObjectId, ref: "User" }],
       default: [],
     },
+    labels: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Label" }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

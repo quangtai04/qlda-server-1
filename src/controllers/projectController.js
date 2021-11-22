@@ -7,11 +7,16 @@ const Project = require("../model/projectModel");
 const Post = require("../model/postModel");
 const User = require("../model/userModel");
 const Comment = require("../model/commentModel");
-const Task = require("../model/taskModel");
-const { getNameAndAvatar } = require("./userController");
 const sectionController = require("./sectionController");
+const labelController = require("./labelController");
 const { RoleProject } = require("../helper/role");
-
+/**
+ * get Role user
+ * @param {*} res
+ * @param {*} userId
+ * @param {*} projectId
+ * @returns
+ */
 exports.getRole = async (res, userId, projectId) => {
   let project = await Project.findById(projectId);
   if (!project) {
@@ -27,6 +32,13 @@ exports.getRole = async (res, userId, projectId) => {
   return role;
 };
 
+/**
+ * Check user is Admin project
+ * @param {*} res
+ * @param {*} userId
+ * @param {*} projectId
+ * @returns
+ */
 exports.checkAdmin = async (res, userId, projectId) => {
   let project = await Project.findById(projectId);
   if (!project) {
@@ -37,21 +49,88 @@ exports.checkAdmin = async (res, userId, projectId) => {
   }
   return false;
 };
-
+/**
+ * set default section when add task
+ * @param {*} userId
+ * @param {*} projectId
+ */
 const addSectionDefault = async (userId, projectId) => {
-  const listSection = ["Planning", "To do", "Completed"];
-  listSection.forEach(async (sec, index) => {
-    await sectionController.addNewSection(
-      {
-        authorId: userId,
-        projectId: projectId,
-        name: sec,
-      },
-      (err, allTasks) => {}
-    );
-  });
+  await sectionController.addNewSection(
+    {
+      authorId: userId,
+      projectId: projectId,
+      name: "Planning",
+    },
+    async (err, allTasks) => {
+      await sectionController.addNewSection(
+        {
+          authorId: userId,
+          projectId: projectId,
+          name: "To do",
+        },
+        async (err, allTasks) => {
+          await sectionController.addNewSection(
+            {
+              authorId: userId,
+              projectId: projectId,
+              name: "Completed",
+            },
+            async (err, allTasks) => {}
+          );
+        }
+      );
+    }
+  );
 };
 
+/**
+ *
+ * @param {*} userId  string
+ * @param {*} projectId string
+ */
+const addDefaultLabel = async (userId, projectId) => {
+  labelController.addLabelOne(
+    projectId,
+    "bug",
+    "#bf1a07",
+    "Something isn't working",
+    userId,
+    (err, label) => {
+      labelController.addLabelOne(
+        projectId,
+        "duplicate",
+        "#cfd3d7",
+        "This issue or pull request already exists",
+        userId,
+        (err, label) => {}
+      );
+    }
+  );
+};
+
+module.exports.getLabels = async (req, res) => {
+  let userId = await getCurrentId(req);
+  let { projectId } = req.query;
+  try {
+    let user = await User.findById(userId);
+    if (!user) {
+      return handleErrorResponse(res, 400, "Phiên đăng nhập đã kết thúc");
+    }
+    let project = await Project.findById(projectId).populate({
+      path: "labels",
+    });
+    return handleSuccessResponse(res, 200, project.labels, "Thành công");
+  } catch (err) {
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+
+/**
+ * add project
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
 module.exports.addProject = async (req, res) => {
   // var io = req.app.get("io");
   let body = req.body;
@@ -67,7 +146,8 @@ module.exports.addProject = async (req, res) => {
           return handleErrorResponse(res, 400, null, "Add project thất bại!");
         }
         user.projects.push(project._id);
-        addSectionDefault(userId, project._id);
+        await addSectionDefault(userId, project._id);
+        await addDefaultLabel(userId, project._id);
         await user.save();
         return handleSuccessResponse(
           res,
@@ -82,7 +162,7 @@ module.exports.addProject = async (req, res) => {
   }
 };
 /**
- *
+ * add user to project
  * @param {* projectId, userId} req
  * @param {*} res
  * @returns
@@ -126,11 +206,22 @@ module.exports.getUsers = async (req, res) => {
     if (!user) {
       return handleErrorResponse(res, 400, "Phiên đăng nhập đã kết thúc");
     }
-    let project = await Project.findById(projectId).populate({
-      path: "users",
-      select: "avatar username role email _id",
-    });
-    return handleSuccessResponse(res, 200, project.users, "Thành công");
+    let project = await Project.findById(projectId).populate([
+      {
+        path: "users",
+        select: "avatar username role email _id",
+      },
+      {
+        path: "userAdmin",
+        select: "_id",
+      },
+    ]);
+    return handleSuccessResponse(
+      res,
+      200,
+      { users: project.users, userAdmin: project.userAdmin },
+      "Thành công"
+    );
   } catch (err) {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
@@ -162,25 +253,6 @@ module.exports.deleteProject = async (req, res) => {
       user.save();
     });
     await Project.deleteOne({ _id: projectId });
-
-    // let query = await User.deleteProjectCreated(project.userId, projectId);
-    // if (!query) {
-    //   return handleErrorResponse(res, 400, "Error deleteProjectCreated");
-    // }
-    // let listUserJoin = await project.get("userJoin");
-    // listUserJoin.map(async (value, i) => {
-    //   let query = await User.outProject(value, projectId);
-    //   if (!query) {
-    //     return handleErrorResponse("Error outProject!");
-    //   }
-    // });
-    // let listPost = await Post.find({ projectId: projectId });
-    // listPost.map(async (value, i) => {
-    //   await Comment.remove({ postId: value._id });
-    //   await Post.findOneAndRemove({ _id: value._id });
-    // });
-    // await Task.remove({ projectId: projectId });
-    // await Project.remove({ _id: projectId });
     return handleSuccessResponse(res, 200, project, "Xóa thành công");
   } else {
     return handleErrorResponse(res, 400, "Không tồn tại projectID");
@@ -280,6 +352,12 @@ module.exports.getUserJoin = async (req, res) => {
   // }
   // return handleErrorResponse(res, 400, "Thất bại");
 };
+/**
+ * setAdmin for a member
+ * @param {*} req projectId, memberId
+ * @param {*} res
+ * @returns
+ */
 module.exports.setAdmin = async (req, res) => {
   let { projectId, memberId } = req.body;
   let userId = await getCurrentId(req);
@@ -289,8 +367,31 @@ module.exports.setAdmin = async (req, res) => {
       if (project.users.indexOf(memberId) !== -1) {
         if (project.userAdmin.indexOf(memberId) === -1) {
           project.userAdmin.push(memberId);
-          project.save();
-          return handleSuccessResponse(res, 200, project, "Thành công");
+          project.save(async (err, obj) => {
+            if (err) {
+              return handleErrorResponse(
+                res,
+                400,
+                "Một lỗi không mong muốn đã xảy ra"
+              );
+            }
+            let projectSave = await Project.findById(projectId).populate([
+              {
+                path: "users",
+                select: "username avatar role email",
+              },
+              {
+                path: "userAdmin",
+                select: "_id",
+              },
+            ]);
+            return handleSuccessResponse(
+              res,
+              200,
+              { users: projectSave.users, userAdmin: project.userAdmin },
+              "Thành công"
+            );
+          });
         } else {
           return handleErrorResponse(res, 400, "Người dùng đã admin từ trước!");
         }
@@ -308,6 +409,13 @@ module.exports.setAdmin = async (req, res) => {
     return handleErrorResponse(res, 400, "Không tồn tại Project");
   }
 };
+
+/**
+ * drop admin to project
+ * @param {*} req projectId, memberId
+ * @param {*} res
+ * @returns
+ */
 module.exports.dropAdmin = async (req, res) => {
   let { projectId, memberId } = req.body;
   let userId = await getCurrentId(req);
@@ -315,11 +423,41 @@ module.exports.dropAdmin = async (req, res) => {
   if (project) {
     if (project.userAdmin[0] !== userId) {
       if (project.userAdmin.indexOf(memberId) !== -1) {
+        if (memberId === userId.toString()) {
+          return handleErrorResponse(
+            res,
+            400,
+            "Không thể xóa quyền Admin người tạo project"
+          );
+        }
         project.userAdmin.splice(project.userAdmin.indexOf(memberId), 1);
-        project.save();
-        return handleSuccessResponse(res, 200, project, "Thành công");
+        project.save(async (err, obj) => {
+          if (err) {
+            return handleErrorResponse(
+              res,
+              400,
+              "Một lỗi không mong muốn đã xảy ra"
+            );
+          }
+          let projectSave = await Project.findById(projectId).populate([
+            {
+              path: "users",
+              select: "username avatar role email",
+            },
+            {
+              path: "userAdmin",
+              select: "_id",
+            },
+          ]);
+          return handleSuccessResponse(
+            res,
+            200,
+            { users: projectSave.users, userAdmin: project.userAdmin },
+            "Thành công"
+          );
+        });
       } else {
-        return handleErrorResponse(res, 400, "Member chưa là admin project!");
+        return handleErrorResponse(res, 400, "Không có quyền truy cập");
       }
     } else {
       return handleErrorResponse(res, 400, "Bạn không có quyền này!");
@@ -328,6 +466,12 @@ module.exports.dropAdmin = async (req, res) => {
     return handleErrorResponse(res, 400, "Không tồn tại Project");
   }
 };
+/**
+ * delete member
+ * @param {*} req  projectId, memberId
+ * @param {*} res
+ * @returns
+ */
 module.exports.deleteMember = async (req, res) => {
   let { projectId, memberId } = req.body;
   try {
@@ -343,8 +487,31 @@ module.exports.deleteMember = async (req, res) => {
       if (project.userAdmin.indexOf(userId) !== -1) {
         if (project.users.indexOf(memberId) !== -1) {
           project.users.splice(project.users.indexOf(memberId), 1);
-          project.save();
-          return handleSuccessResponse(res, 200, project, "Thành công");
+          project.save(async (err, obj) => {
+            if (err) {
+              return handleErrorResponse(
+                res,
+                400,
+                "Một lỗi không mong muốn đã xảy ra"
+              );
+            }
+            let projectSave = await Project.findById(projectId).populate([
+              {
+                path: "users",
+                select: "username avatar role email",
+              },
+              {
+                path: "userAdmin",
+                select: "_id",
+              },
+            ]);
+            return handleSuccessResponse(
+              res,
+              200,
+              { users: projectSave.users, userAdmin: project.userAdmin },
+              "Thành công"
+            );
+          });
         } else {
           return handleErrorResponse(
             res,
@@ -357,5 +524,58 @@ module.exports.deleteMember = async (req, res) => {
     }
   } catch (error) {
     return handleErrorResponse(res, 400, error + "");
+  }
+};
+/**
+ * return all project
+ * @param {*} req projectId
+ * @param {*} res
+ */
+module.exports.analysis = async (req, res) => {
+  let userId = await getCurrentId(req);
+  let { projectId } = req.body;
+  try {
+    let user = await User.findById(userId);
+    if (!user) {
+      return handleErrorResponse(res, 400, "Không tồn tại user");
+    }
+    let selectUser = "_id username email avatar role";
+    await Project.findById(projectId)
+      .populate([
+        {
+          path: "users",
+          select: selectUser,
+        },
+        {
+          path: "sections",
+          populate: [
+            {
+              path: "tasks",
+              populate: [
+                {
+                  path: "assignment",
+                  select: selectUser,
+                },
+                {
+                  path: "authorId",
+                  select: selectUser,
+                },
+              ],
+            },
+            {
+              path: "authorId",
+              select: selectUser,
+            },
+          ],
+          select: "_id tasks authorId projectId name",
+        },
+      ])
+      .select("users userAdmin sections name createdAt updatedAt")
+      .then((project) => {
+        return handleSuccessResponse(res, 200, project, "Thành công");
+      });
+  } catch (err) {
+    console.log(err);
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
 };
