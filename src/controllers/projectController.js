@@ -112,6 +112,36 @@ module.exports.joinProject = async (req, res) => {
     return handleErrorResponse(res, 400, "Join project thất bại!");
   }
 };
+/**
+ * get all users in project
+ * @param {*} req projectId
+ * @param {*} res
+ */
+
+module.exports.getUsers = async (req, res) => {
+  let { projectId } = req.query;
+  let userId = await getCurrentId(req);
+  try {
+    let user = await User.findById(userId);
+    if (!user) {
+      return handleErrorResponse(res, 400, "Phiên đăng nhập đã kết thúc");
+    }
+    let project = await Project.findById(projectId).populate({
+      path: "users",
+      select: "avatar username role email _id",
+    });
+    return handleSuccessResponse(res, 200, project.users, "Thành công");
+  } catch (err) {
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+
+/**
+ * delete project
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
 
 module.exports.deleteProject = async (req, res) => {
   let { projectId } = req.body;
