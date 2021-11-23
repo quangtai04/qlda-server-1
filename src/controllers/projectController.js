@@ -112,6 +112,36 @@ module.exports.joinProject = async (req, res) => {
     return handleErrorResponse(res, 400, "Join project thất bại!");
   }
 };
+/**
+ * get all users in project
+ * @param {*} req projectId
+ * @param {*} res
+ */
+
+module.exports.getUsers = async (req, res) => {
+  let { projectId } = req.query;
+  let userId = await getCurrentId(req);
+  try {
+    let user = await User.findById(userId);
+    if (!user) {
+      return handleErrorResponse(res, 400, "Phiên đăng nhập đã kết thúc");
+    }
+    let project = await Project.findById(projectId).populate({
+      path: "users",
+      select: "avatar username role email _id",
+    });
+    return handleSuccessResponse(res, 200, project.users, "Thành công");
+  } catch (err) {
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+
+/**
+ * delete project
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
 
 module.exports.deleteProject = async (req, res) => {
   let { projectId } = req.body;
@@ -167,7 +197,7 @@ module.exports.getProject = async (req, res) => {
         return handleSuccessResponse(res, 200, result.projects, "Thành công");
       })
       .catch((err) => {
-        console.log(err);
+        return handleErrorResponse(res, 400, "Lỗi không thể lấy dữ liệu!");
       });
   } catch (error) {
     return handleErrorResponse(res, 400, "Lỗi không thể lấy dữ liệu!");
@@ -237,18 +267,18 @@ module.exports.getUserJoin = async (req, res) => {
     .catch((err) => {
       return handleErrorResponse(res, 400, "Thất bại");
     });
-  if (project) {
-    let listUser = project.users;
-    listUser.push(project.userId);
-    let listProfile = [];
-    return handleSuccessResponse(
-      res,
-      200,
-      { listUser: listProfile },
-      "Thành công"
-    );
-  }
-  return handleErrorResponse(res, 400, "Thất bại");
+  // if (project) {
+  //   let listUser = project.users;
+  //   listUser.push(project.userId);
+  //   let listProfile = [];
+  //   return handleSuccessResponse(
+  //     res,
+  //     200,
+  //     { listUser: listProfile },
+  //     "Thành công"
+  //   );
+  // }
+  // return handleErrorResponse(res, 400, "Thất bại");
 };
 module.exports.setAdmin = async (req, res) => {
   let { projectId, memberId } = req.body;
