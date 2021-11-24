@@ -165,7 +165,7 @@ module.exports.getUserInfo = async (req, res) => {
                 ? "0" + String(user.get("birthday").getDate())
                 : String(user.get("birthday").getDate())
               : "01"),
-          gameIdArray: user.get("gameIdArray"),
+          projects: user.get("projects"),
         },
         "Get User Complate!"
       );
