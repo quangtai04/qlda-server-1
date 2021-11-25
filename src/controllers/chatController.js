@@ -48,6 +48,32 @@ module.exports.addChat = async (req, res) => {
     );
   }
 };
+module.exports.getListChat = async (req, res) => {
+  let userId = await getCurrentId(req);
+  if (userId) {
+    await User.findById(userId)
+      .populate([{
+        path: "friendChat",
+        select: ["friendID"],
+        populate: { path: "friendID", select: ["username", "avatar"] }
+      }, {
+        path: "projects",
+        select: ["name", "avatar"]
+      }])
+      .then((user) => {
+        let friendChat = []
+        user.friendChat.forEach(element => {
+          if (!friendChat.includes(element.friendID)) {
+            friendChat.push(element.friendID)
+          }
+        });
+        return handleSuccessResponse(res, 200, { friendChat: friendChat, projectChat: user.projects }, "Thành công");
+      })
+      .catch(() => {
+        return handleErrorResponse(res, 401, "Có lỗi xảy ra");
+      })
+  }
+};
 module.exports.getChat = async (req, res) => {
   let { projectId } = req.body;
   let userId = await getCurrentId(req);
@@ -79,4 +105,4 @@ module.exports.getChat = async (req, res) => {
     return handleErrorResponse(res, 401, error);
   }
 };
-module.exports.removeChat = async (req, res) => {};
+module.exports.removeChat = async (req, res) => { };
