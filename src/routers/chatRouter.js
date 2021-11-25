@@ -7,4 +7,5 @@ router.use(authUser);
 router.post("/addChat", chatController.addChat);
 router.post("/getChat", chatController.getChat);
 router.post("/removeChat", chatController.removeChat);
+router.post("/getListChat", chatController.getListChat);
 module.exports = router;
