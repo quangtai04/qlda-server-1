@@ -40,18 +40,25 @@ module.exports.addChat = async (req, res) => {
     user.friendChat.push(chat);
     friend.friendChat.push(chat);
     user.save();
-    return handleSuccessResponse(
-      res,
-      200,
-      { listChat: user.friendChat },
-      "Thành công!"
-    );
+    friend.save();
+    await User.findById(userId)
+      .populate({
+        path: "friendChat",
+        populate: {
+          path: "_id",
+          select: ["content"],
+          populate: { path: "userId", select: ["username", "avatar"] },
+        },
+      })
+      .then((user) => {
+        return handleSuccessResponse(res, 200, user.friendChat, "Thành công");
+      });
   }
 };
 module.exports.getListChat = async (req, res) => {
   let userId = await getCurrentId(req);
   if (userId) {
-    await User.findById(userId)
+    let user = await User.findById(userId)
       .populate([{
         path: "friendChat",
         select: ["friendID"],
@@ -78,7 +85,8 @@ module.exports.getChat = async (req, res) => {
   let { projectId } = req.body;
   let userId = await getCurrentId(req);
   try {
-    if (projectId) {
+    let project = await Project.findById(projectId)
+    if (project) {
       await Project.findById(projectId)
         .populate({
           path: "chats",
