@@ -6,6 +6,7 @@ const {
 const Label = require("../model/labelModal");
 const Project = require("../model/projectModel");
 const User = require("../model/userModel");
+const taskController = require("../controllers/taskController");
 
 /**
  * add new label
@@ -51,7 +52,7 @@ module.exports.addLabelOne = async (
  */
 module.exports.getLabel = async (req, res) => {
   let userId = await getCurrentId(req);
-  let { projectId, labelId } = req.body;
+  let { labelId } = req.query;
   try {
     let user = await User.findById(userId);
     if (!user) {
@@ -89,11 +90,17 @@ module.exports.addLabel = async (req, res) => {
       color,
       description,
       userId,
-      (err, label) => {
+      async (err, label) => {
         if (err) {
           return handleErrorResponse(res, 400, err);
         }
-        return handleSuccessResponse(res, 200, label, "Thành công");
+        let project = await Project.findById(projectId).populate({
+          path: "labels",
+        });
+        if (!project) {
+          return handleErrorResponse(res, 400, "Lỗi lấy dữ liệu");
+        }
+        return handleSuccessResponse(res, 200, project.labels, "Thành công");
       }
     );
   } catch (err) {
@@ -115,6 +122,9 @@ module.exports.updateLabel = async (req, res) => {
       return handleErrorResponse(res, 400, "Phiên đăng nhập đã kết thúc");
     }
     let label = await Label.findById(labelId);
+    if (userId !== label.authorId.toString()) {
+      return handleErrorResponse(res, 400, "Không có quyền truy cập");
+    }
     label.name = name;
     label.description = description;
     if (color) {
@@ -136,11 +146,11 @@ module.exports.updateLabel = async (req, res) => {
 };
 /**
  * delete Label
- * @param {*} req   projectId, labelId
+ * @param {*} req   projectId, taskId, labelId
  * @param {*} res
  */
 module.exports.deleteLabel = async (req, res) => {
-  let { labelId, projectId } = req.body;
+  let { labelId, projectId, taskId } = req.body;
   let userId = await getCurrentId(req);
   try {
     let user = await User.findById(userId);
@@ -151,7 +161,7 @@ module.exports.deleteLabel = async (req, res) => {
     if (!label) {
       return handleErrorResponse(res, 400, "Không tồn tại label");
     }
-    if (label.authorId !== userId) {
+    if (label.authorId.toString() !== userId) {
       return handleErrorResponse(res, 400, "Không có quyền xóa label");
     }
     await Label.findByIdAndRemove(labelId);
@@ -169,13 +179,37 @@ module.exports.deleteLabel = async (req, res) => {
     });
     project.save((err, obj) => {
       if (err) {
+        console.log(err);
         return handleErrorResponse(
           res,
           400,
           "Một lỗi không mong muốn đã xảy ra"
         );
       }
-      return handleSuccessResponse(res, 200, project, "Thành công");
+      taskController.getAllTasks(projectId, (err, allTasks) => {
+        if (err) {
+          return handleErrorResponse(
+            res,
+            400,
+            "Một lỗi không mong muốn đã xả ra"
+          );
+        }
+        taskController.getTaskById(taskId, (err, task) => {
+          if (err) {
+            return handleErrorResponse(
+              res,
+              400,
+              "Một lỗi không mong muốn đã xả ra"
+            );
+          }
+          return handleSuccessResponse(
+            res,
+            200,
+            { allTasks: allTasks, taskUpdate: task },
+            "Thành công"
+          );
+        });
+      });
     });
   } catch (err) {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");

@@ -88,6 +88,9 @@ exports.getTaskById = async (taskId, callback) => {
           select: "avatar _id email username",
         },
       },
+      {
+        path: "labels",
+      },
     ])
     .then((task) => {
       if (!task) {
@@ -142,11 +145,10 @@ module.exports.addTask = async (req, res) => {
       dueDate: body.dueDate,
       description: body.description,
       isDone: body.isDone !== undefined ? body.isDone : false,
-      labels: project.labels.length > 0 ? [project.labels[0]] : [],
+      labels: body.labels.length > 0 ? body.labels : [],
     });
     task.save(async (err, obj) => {
       if (err) {
-        console.log(err);
         return handleErrorResponse(
           res,
           400,
@@ -318,7 +320,7 @@ module.exports.changeSection = async (req, res) => {
 /**
  *
  * @param {*} req projectId, taskId, dependencies?, assignment?: String[], name?, description, files?,
- *        dueDate?: {from: Date, to: Date}, isDone?: boolean, status?, priority?
+ *        dueDate?: {from: Date, to: Date}, isDone?: boolean, labels: Array<string>
  * @param {*} res
  * @returns { * } allTasks: data, taskUpdate: task
  */
@@ -349,9 +351,7 @@ module.exports.updateTask = async (req, res) => {
     if (req.body.isDone !== undefined) task.isDone = req.body.isDone;
     if (req.body.description !== undefined)
       task.description = req.body.description;
-    if (typeof req.body.priority === "number")
-      task.priority = req.body.priority;
-    if (typeof req.body.status === "number") task.status = req.body.status;
+    if (req.body.labels !== undefined) task.labels = req.body.labels;
     task.save(async (err, obj) => {
       if (err) {
         return handleErrorResponse(

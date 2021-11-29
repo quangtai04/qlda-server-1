@@ -5,7 +5,7 @@ var labelSchema = Schema(
   {
     color: { type: String, default: "#12b300" },
     name: { type: String, default: "new label" },
-    descripton: { type: String, default: "" },
+    description: { type: String, default: "" },
     authorId: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }

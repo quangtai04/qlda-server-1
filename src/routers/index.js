@@ -7,6 +7,7 @@ const sectionRouter = require("./sectionRouter");
 const taskRouter = require("./taskRouter");
 const mailer = require("./mailRouter");
 const notificationRouter = require("../routers/notificationRouter");
+const labelRouter = require("../routers/labelRouter");
 
 const commentRouter = require("./commentRouter");
 
@@ -25,6 +26,7 @@ module.exports = (app) => {
   app.use("/api/section", sectionRouter);
   app.use("/api/comment", commentRouter);
   app.use("/api/notification", notificationRouter);
+  app.use("/api/labels", labelRouter);
   app.use("/api/task", taskRouter);
   app.use("/api/mailer", mailer);
   app.get("/api/images", async (req, res) => {

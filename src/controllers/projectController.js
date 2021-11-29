@@ -107,7 +107,12 @@ const addDefaultLabel = async (userId, projectId) => {
     }
   );
 };
-
+/**
+ * get all labels in project
+ * @param {*} req projectId
+ * @param {*} res
+ * @returns
+ */
 module.exports.getLabels = async (req, res) => {
   let userId = await getCurrentId(req);
   let { projectId } = req.query;
