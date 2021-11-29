@@ -36,7 +36,7 @@ exports.getNameAndAvatar = async (id) => {
   }
   return author;
 };
-module.exports.getUser = (req, res, next) => {};
+module.exports.getUser = (req, res, next) => { };
 module.exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -136,7 +136,9 @@ module.exports.changePassword = async (req, res) => {
 module.exports.getUserInfo = async (req, res) => {
   // return data :{username, email, avatar, language, birthday, role, gameIdArray}
   try {
-    const user_id = await getCurrentId(req);
+    let { userId } = req.query;
+    const user_id = !userId ? await getCurrentId(req) : userId;
+    console.log(user_id);
     const user = await User.findOne({ _id: user_id });
     if (user) {
       return handleSuccessResponse(
