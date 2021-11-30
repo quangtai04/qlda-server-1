@@ -12,6 +12,9 @@ module.exports.addChat = async (req, res) => {
   let friend = await User.findById(friendId);
   let userId = await getCurrentId(req);
   let user = await User.findById(userId);
+  if (JSON.stringify(friend._id) === JSON.stringify(user._id)) {
+    return handleErrorResponse(res, 400, "Chưa gửi được tin nhắn");
+  }
   if (project || friend) {
     var chat = new Chat({
       userId: userId,
@@ -44,7 +47,10 @@ module.exports.addChat = async (req, res) => {
     await User.findById(userId)
       .populate({
         path: "friendChat",
-        populate: [{ path: "friendID", select: ["username", "avatar"] }, { path: "userId", select: ["username", "avatar"] }]
+        populate: [
+          { path: "friendID", select: ["username", "avatar"] },
+          { path: "userId", select: ["username", "avatar"] },
+        ],
       })
       .then((user) => {
         return handleSuccessResponse(res, 200, user.friendChat, "Thành công");
@@ -55,41 +61,53 @@ module.exports.getListChat = async (req, res) => {
   let userId = await getCurrentId(req);
   if (userId) {
     await User.findById(userId)
-      .populate([{
-        path: "friendChat",
-        populate: [{ path: "friendID", select: ["username", "avatar"] }, { path: "userId", select: ["username", "avatar"] }]
-      }, {
-        path: "projects",
-        select: ["name", "avatar"]
-      }])
+      .populate([
+        {
+          path: "friendChat",
+          populate: [
+            { path: "friendID", select: ["username", "avatar"] },
+            { path: "userId", select: ["username", "avatar"] },
+          ],
+        },
+        {
+          path: "projects",
+          select: ["name", "avatar"],
+        },
+      ])
       .then((user) => {
-        let friendChat = []
-        user.friendChat.forEach(element => {
+        let friendChat = [];
+        user.friendChat.forEach((element) => {
           if (JSON.stringify(userId) === JSON.stringify(element.userId._id)) {
             if (!friendChat.includes(element.friendID)) {
-              friendChat.push(element.friendID)
+              friendChat.push(element.friendID);
             }
-          }
-          else {
+          } else {
             if (!friendChat.includes(element.userId)) {
-              friendChat.push(element.userId)
+              friendChat.push(element.userId);
             }
           }
         });
-        const ids = friendChat.map(o => o.id)
-        friendChat = friendChat.filter(({ id }, index) => !ids.includes(id, index + 1))
-        return handleSuccessResponse(res, 200, { friendChat: friendChat, projectChat: user.projects }, "Thành công");
+        const ids = friendChat.map((o) => o.id);
+        friendChat = friendChat.filter(
+          ({ id }, index) => !ids.includes(id, index + 1)
+        );
+        return handleSuccessResponse(
+          res,
+          200,
+          { friendChat: friendChat, projectChat: user.projects },
+          "Thành công"
+        );
       })
       .catch(() => {
         return handleErrorResponse(res, 401, "Có lỗi xảy ra");
-      })
+      });
   }
 };
 module.exports.getChat = async (req, res) => {
   let { projectId } = req.body;
   let userId = await getCurrentId(req);
   try {
-    let project = await Project.findById(projectId)
+    let project = await Project.findById(projectId);
     if (project) {
       await Project.findById(projectId)
         .populate({
@@ -103,7 +121,10 @@ module.exports.getChat = async (req, res) => {
       await User.findById(userId)
         .populate({
           path: "friendChat",
-          populate: [{ path: "friendID", select: ["username", "avatar"] }, { path: "userId", select: ["username", "avatar"] }]
+          populate: [
+            { path: "friendID", select: ["username", "avatar"] },
+            { path: "userId", select: ["username", "avatar"] },
+          ],
         })
         .then((user) => {
           return handleSuccessResponse(res, 200, user.friendChat, "Thành công");
@@ -113,4 +134,4 @@ module.exports.getChat = async (req, res) => {
     return handleErrorResponse(res, 401, error);
   }
 };
-module.exports.removeChat = async (req, res) => { };
+module.exports.removeChat = async (req, res) => {};
