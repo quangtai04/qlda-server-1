@@ -6,8 +6,6 @@ const {
   getCurrentId,
   test,
 } = require("../helper/responseHelper");
-const Project = require("../model/projectModel");
-
 const maxAge = 3 * 24 * 60 * 60;
 const createToken = (id) => {
   return jwt.sign({ id }, "ptud web", {
@@ -36,8 +34,9 @@ exports.getNameAndAvatar = async (id) => {
   }
   return author;
 };
-module.exports.getUser = (req, res, next) => { };
+module.exports.getUser = (req, res, next) => {};
 module.exports.loginUser = async (req, res) => {
+  ``;
   const { email, password } = req.body;
   try {
     const user = await User.login(email, password);
@@ -135,44 +134,51 @@ module.exports.changePassword = async (req, res) => {
 
 module.exports.getUserInfo = async (req, res) => {
   // return data :{username, email, avatar, language, birthday, role, gameIdArray}
+  var ObjectID = require("mongodb").ObjectID;
   try {
     let { userId } = req.query;
-    const user_id = !userId ? await getCurrentId(req) : userId;
-    console.log(user_id);
-    const user = await User.findOne({ _id: user_id });
-    if (user) {
-      return handleSuccessResponse(
-        res,
-        200,
-        {
-          role: user.get("role"),
-          userId: user_id,
-          avatar: user.get("avatar"),
-          language: user.get("language"),
-          email: user.get("email"),
-          username: user.get("username"),
-          birthday:
-            (user.get("birthday")
-              ? String(user.get("birthday").getFullYear())
-              : "2000") +
-            "-" +
-            (user.get("birthday")
-              ? String(user.get("birthday").getMonth() + 1) <= "9"
-                ? "0" + String(user.get("birthday").getMonth() + 1)
-                : String(user.get("birthday").getMonth() + 1)
-              : "01") +
-            "-" +
-            (user.get("birthday")
-              ? String(user.get("birthday").getDate()) <= "9"
-                ? "0" + String(user.get("birthday").getDate())
-                : String(user.get("birthday").getDate())
-              : "01"),
-          projects: user.get("projects"),
-        },
-        "Get User Complate!"
-      );
+    var user_id;
+    if (ObjectID.isValid(userId)) {
+      user_id = userId;
+    } else {
+      user_id = await getCurrentId(req);
     }
-    return handleErrorResponse(res, 400, "Get User ERROR!");
+    if (user_id) {
+      const user = await User.findOne({ _id: user_id });
+      if (user) {
+        return handleSuccessResponse(
+          res,
+          200,
+          {
+            role: user.get("role"),
+            userId: user_id,
+            avatar: user.get("avatar"),
+            language: user.get("language"),
+            email: user.get("email"),
+            username: user.get("username"),
+            birthday:
+              (user.get("birthday")
+                ? String(user.get("birthday").getFullYear())
+                : "2000") +
+              "-" +
+              (user.get("birthday")
+                ? String(user.get("birthday").getMonth() + 1) <= "9"
+                  ? "0" + String(user.get("birthday").getMonth() + 1)
+                  : String(user.get("birthday").getMonth() + 1)
+                : "01") +
+              "-" +
+              (user.get("birthday")
+                ? String(user.get("birthday").getDate()) <= "9"
+                  ? "0" + String(user.get("birthday").getDate())
+                  : String(user.get("birthday").getDate())
+                : "01"),
+            projects: user.get("projects"),
+          },
+          "Get User Complate!"
+        );
+      }
+      return handleErrorResponse(res, 400, "Get User ERROR!");
+    }
   } catch (error) {
     return handleErrorResponse(res, 400, "No Found User");
   }
