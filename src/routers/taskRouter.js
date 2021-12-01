@@ -4,6 +4,7 @@ const taskController = require("../controllers/taskController");
 const authUser = require("../middleware/userMiddleware");
 const authProj = require("../middleware/projectMiddleware");
 //router
+router.get("/getTaskGithub", taskController.getTaskGithub);
 router.use(authUser);
 // router.post("/getAllTaskUser", taskController.getAllTaskUser);
 router.use(authProj);

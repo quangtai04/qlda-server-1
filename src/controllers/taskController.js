@@ -3,15 +3,13 @@ const {
   handleSuccessResponse,
   getCurrentId,
 } = require("../helper/responseHelper");
+const axios = require("axios");
 const Project = require("../model/projectModel");
-const Post = require("../model/postModel");
 const User = require("../model/userModel");
-const Comment = require("../model/commentModel");
 const Task = require("../model/taskModel");
-const { getNameAndAvatar } = require("./userController");
 const Section = require("../model/sectionModel");
-const sectionController = require("../controllers/sectionController");
 const projectController = require("../controllers/projectController");
+const { createEventCalendar } = require("../services/google/calendar");
 
 /**
  *
@@ -119,7 +117,21 @@ exports.checkAuthor = async (res, userId, taskId) => {
   }
   return false;
 };
-
+module.exports.getTaskGithub = async (req, res) => {
+  try {
+    axios
+      .get("http://localhost:3004/api/github")
+      .then((response) => {
+        return handleSuccessResponse(res, 200, response.data, "Thành công");
+      })
+      .catch((error) => {
+        // console.log(error);
+      });
+  } catch (err) {
+    console.log(err);
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
 module.exports.addTask = async (req, res) => {
   //req: {sectionId, projectId, dependencies: [], assignment: [],
   //      name, description, files , dueDate: {from: Date, to: Date}, isDone, labels: Array<string>}
@@ -155,6 +167,17 @@ module.exports.addTask = async (req, res) => {
           "Một lỗi không mong muốn đã xảy ra"
         );
       }
+      const eventStartTime = new Date();
+      eventStartTime.setDate(eventStartTime.getDay() + 3);
+      const eventEndTime = new Date();
+      eventEndTime.setDate(eventEndTime.getDay() + 4);
+      eventEndTime.setMinutes(eventEndTime.getMinutes() + 45);
+      createEventCalendar(
+        eventStartTime,
+        eventEndTime,
+        body.name,
+        body.description
+      );
       section.tasks.push(task._id);
       section.save(async (err, obj) => {
         if (err) {
@@ -171,9 +194,6 @@ module.exports.addTask = async (req, res) => {
           return handleSuccessResponse(res, 200, data, "Thành công");
         });
       });
-      // fetch("http://localhost:3003/api/github")
-      //   .then((res) => res.json())
-      //   .then((json) => {});
     });
   } catch (err) {
     console.log(err);
