@@ -12,8 +12,10 @@ module.exports.addChat = async (req, res) => {
   let friend = await User.findById(friendId);
   let userId = await getCurrentId(req);
   let user = await User.findById(userId);
-  if (JSON.stringify(friend._id) === JSON.stringify(user._id)) {
-    return handleErrorResponse(res, 400, "Chưa gửi được tin nhắn");
+  if (friend) {
+    if (JSON.stringify(friend._id) === JSON.stringify(user._id)) {
+      return handleErrorResponse(res, 400, "Chưa gửi được tin nhắn");
+    }
   }
   if (project || friend) {
     var chat = new Chat({
