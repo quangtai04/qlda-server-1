@@ -118,11 +118,33 @@ exports.checkAuthor = async (res, userId, taskId) => {
   return false;
 };
 module.exports.getTaskGithub = async (req, res) => {
+  let { projectId, sectionId } = req.query;
+  let userId = await getCurrentId(req);
   try {
     axios
-      .get("http://localhost:3004/api/github")
-      .then((response) => {
-        return handleSuccessResponse(res, 200, response.data, "Thành công");
+      .get("http://localhost:3003/api/github")
+      .then(async (response) => {
+        let listTask = response.data.tasks.task;
+        listTask.forEach(async (element) => {
+          let dueDate = {
+            from: new Date(element.createDate),
+            to: element.closeDate ? new Date(element.closeDate) : new Date(),
+          };
+          await this.handleAddTask(
+            userId,
+            projectId,
+            sectionId,
+            dueDate,
+            element.title
+          ).then(() => {
+            this.getAllTasks(projectId, (err, data) => {
+              if (err) {
+                return handleErrorResponse(res, 400, err);
+              }
+              return handleSuccessResponse(res, 200, data, "Thành công");
+            });
+          });
+        });
       })
       .catch((error) => {
         // console.log(error);
@@ -179,7 +201,7 @@ module.exports.addTask = async (req, res) => {
         body.description
       );
       section.tasks.push(task._id);
-      section.save(async (err, obj) => {
+      await section.save(async (err, obj) => {
         if (err) {
           return handleErrorResponse(
             res,
@@ -198,6 +220,31 @@ module.exports.addTask = async (req, res) => {
   } catch (err) {
     console.log(err);
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+exports.handleAddTask = async (userId, projectId, sectionId, dueDate, name) => {
+  try {
+    let user = await User.findById(userId);
+    let section = await Section.findById(sectionId);
+    let project = await Project.findById(projectId);
+    if (!user) {
+      return false;
+    }
+    if (!section || !project) {
+      return false;
+    }
+    let task = new Task({
+      authorId: userId,
+      sectionId: sectionId,
+      dueDate: dueDate,
+      name: name,
+    });
+    await task.save(async (err, obj) => {});
+    section.tasks.push(task._id);
+    await section.save(async (err, obj) => {});
+    return true;
+  } catch (err) {
+    return false;
   }
 };
 /**
