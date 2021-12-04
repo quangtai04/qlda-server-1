@@ -6,7 +6,7 @@ const oAuth2Client = new OAuth2(
 );
 oAuth2Client.setCredentials({
   refresh_token:
-    "1//04abRPp3n-9peCgYIARAAGAQSNwF-L9Ircd65ePlvlc0cuW2i71Sggdg1bOu5HdiRUY2E1GMLuLySFBroHyrnSfEGjK1zI4Ik1Hg",
+    "1//04-Ch_wyfRt0KCgYIARAAGAQSNwF-L9IrjS-IYu1ko3KB-_77vT-qr3bLiNr7v2iwyqQhv2pn8_E5CkyxCVrchUx5RNIvtINqn_8",
 });
 const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
 
@@ -38,6 +38,12 @@ exports.createEventCalendar = (
     end: {
       dateTime: eventEndTime,
       timeZone: "America/Denver",
+    },
+    conferenceData: {
+      createRequest: {
+        requestId: "sample123",
+        conferenceSolutionKey: { type: "hangoutsMeet" },
+      },
     },
   };
   calendar.freebusy.query(
