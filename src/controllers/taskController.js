@@ -154,6 +154,18 @@ module.exports.getTaskGithub = async (req, res) => {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
 };
+exports.addTaskGitHub = (title) => {
+  try {
+    axios
+      .post("http://localhost:3003/api/createIssues", {
+        title: title,
+      })
+      .then(async (response) => {})
+      .catch((error) => {});
+  } catch (err) {
+    console.log(err);
+  }
+};
 module.exports.addTask = async (req, res) => {
   //req: {sectionId, projectId, dependencies: [], assignment: [],
   //      name, description, files , dueDate: {from: Date, to: Date}, isDone, labels: Array<string>}
@@ -200,6 +212,7 @@ module.exports.addTask = async (req, res) => {
         body.name,
         body.description
       );
+      this.addTaskGitHub(body.name);
       section.tasks.push(task._id);
       await section.save(async (err, obj) => {
         if (err) {
