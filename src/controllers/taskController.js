@@ -120,12 +120,19 @@ exports.checkAuthor = async (res, userId, taskId) => {
 module.exports.getTaskGithub = async (req, res) => {
   let { projectId, sectionId } = req.query;
   let userId = await getCurrentId(req);
+  // delete all task before get task from github
+  let section = await Section.findById(sectionId).populate("tasks");
+  section.tasks.forEach(async (taskId, i) => {
+    await Task.findByIdAndRemove(taskId);
+  });
+  section.tasks = [];
+  await section.save();
   try {
     axios
       .get("http://localhost:3003/api/github")
       .then(async (response) => {
         let listTask = response.data.tasks.task;
-        listTask.forEach(async (element) => {
+        listTask.forEach(async (element, i) => {
           let dueDate = {
             from: new Date(element.createDate),
             to: element.closeDate ? new Date(element.closeDate) : new Date(),
@@ -137,12 +144,14 @@ module.exports.getTaskGithub = async (req, res) => {
             dueDate,
             element.title
           ).then(() => {
-            this.getAllTasks(projectId, (err, data) => {
-              if (err) {
-                return handleErrorResponse(res, 400, err);
-              }
-              return handleSuccessResponse(res, 200, data, "Thành công");
-            });
+            if (i === listTask.length - 1) {
+              this.getAllTasks(projectId, (err, data) => {
+                if (err) {
+                  return handleErrorResponse(res, 400, err);
+                }
+                return handleSuccessResponse(res, 200, data, "Thành công");
+              });
+            }
           });
         });
       })
@@ -201,10 +210,10 @@ module.exports.addTask = async (req, res) => {
           "Một lỗi không mong muốn đã xảy ra"
         );
       }
-      const eventStartTime = new Date();
-      eventStartTime.setDate(eventStartTime.getDay() + 3);
-      const eventEndTime = new Date();
-      eventEndTime.setDate(eventEndTime.getDay() + 4);
+      const eventStartTime = new Date(body.dueDate.from);
+      // eventStartTime.setDate(eventStartTime.getDay() + 3);
+      const eventEndTime = new Date(body.dueDate.to);
+      // eventEndTime.setDate(eventEndTime.getDay() + 4);
       eventEndTime.setMinutes(eventEndTime.getMinutes() + 45);
       createEventCalendar(
         eventStartTime,
