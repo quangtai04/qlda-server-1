@@ -9,7 +9,8 @@ const User = require("../model/userModel");
 const Task = require("../model/taskModel");
 const Section = require("../model/sectionModel");
 const projectController = require("../controllers/projectController");
-const { createEventCalendar } = require("../services/google/calendar");
+// const { createEventCalendar } = require("../services/google/calendar");
+const { param } = require("../routers/projectRouter");
 
 /**
  *
@@ -163,18 +164,18 @@ module.exports.getTaskGithub = async (req, res) => {
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
 };
-exports.addTaskGitHub = (title) => {
-  try {
-    axios
-      .post("http://localhost:3003/api/createIssues", {
-        title: title,
-      })
-      .then(async (response) => {})
-      .catch((error) => {});
-  } catch (err) {
-    console.log(err);
-  }
-};
+// exports.addTaskGitHub = (title) => {
+//   try {
+//     axios
+//       .post("http://localhost:3003/api/createIssues", {
+//         title: title,
+//       })
+//       .then(async (response) => {})
+//       .catch((error) => {});
+//   } catch (err) {
+//     console.log(err);
+//   }
+// };
 module.exports.addTask = async (req, res) => {
   //req: {sectionId, projectId, dependencies: [], assignment: [],
   //      name, description, files , dueDate: {from: Date, to: Date}, isDone, labels: Array<string>}
@@ -210,18 +211,18 @@ module.exports.addTask = async (req, res) => {
           "Một lỗi không mong muốn đã xảy ra"
         );
       }
-      const eventStartTime = new Date(body.dueDate.from);
-      // eventStartTime.setDate(eventStartTime.getDay() + 3);
-      const eventEndTime = new Date(body.dueDate.to);
-      // eventEndTime.setDate(eventEndTime.getDay() + 4);
-      eventEndTime.setMinutes(eventEndTime.getMinutes() + 45);
-      createEventCalendar(
-        eventStartTime,
-        eventEndTime,
-        body.name,
-        body.description
-      );
-      this.addTaskGitHub(body.name);
+      // const eventStartTime = new Date(body.dueDate.from);
+      // // eventStartTime.setDate(eventStartTime.getDay() + 3);
+      // const eventEndTime = new Date(body.dueDate.to);
+      // // eventEndTime.setDate(eventEndTime.getDay() + 4);
+      // eventEndTime.setMinutes(eventEndTime.getMinutes() + 45);
+      // createEventCalendar(
+      //   eventStartTime,
+      //   eventEndTime,
+      //   body.name,
+      //   body.description
+      // );
+      // this.addTaskGitHub(body.name);
       section.tasks.push(task._id);
       await section.save(async (err, obj) => {
         if (err) {
@@ -703,14 +704,18 @@ module.exports.deleteAssignment = async (req, res) => {
 
 /**
  *
- * @param {*} params
+ * @param {*} params taskId
  * @param {*} deleteInSection
  * @param {*} callback
  */
 exports.deleteTaskById = async (params, deleteInSection, callback) => {
-  // params: {taskId}
   let task = await Task.findByIdAndRemove(params.taskId);
   if (task) {
+    task.assignment.forEach(async (userId) => {
+      let user = await User.findById(userId);
+      user.tasks.splice(user.tasks.indexOf(params.taskId), 1);
+      user.save();
+    });
     if (deleteInSection) {
       let section = await Section.findById(task.sectionId);
       section.tasks.splice(section.tasks.indexOf(task._id), 1);
