@@ -10,6 +10,7 @@ router.get("/getProject", projectController.getProject);
 router.get("/getAllProject", projectController.getAllProject);
 // router.post("/getProjectJoined", projectController.getProjectJoined);
 router.use(authProj);
+router.get("/getAllTasks", projectController.getAllTasks);
 router.get("/getLabels", projectController.getLabels);
 router.post("/joinProject", projectController.joinProject);
 router.get("/getUsers", projectController.getUsers);

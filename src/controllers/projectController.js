@@ -10,6 +10,7 @@ const Comment = require("../model/commentModel");
 const sectionController = require("./sectionController");
 const labelController = require("./labelController");
 const { RoleProject } = require("../helper/role");
+const { ObjectId } = require("mongoose");
 /**
  * get Role user
  * @param {*} res
@@ -582,5 +583,82 @@ module.exports.analysis = async (req, res) => {
   } catch (err) {
     console.log(err);
     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+/**
+ * GET all task of user
+ * @param {*} req projectId
+ * @param {*} res
+ */
+module.exports.getAllTasks = async function (req, res) {
+  let { projectId } = req.query;
+  let userId = await getCurrentId(req);
+  try {
+    let selectUser = "avatar role tasks email _id username";
+    let user = await User.findById(userId);
+    if (!user) {
+      return handleErrorResponse(res, 400, "Không tồn tại tài khoản");
+    }
+    let project = await Project.findById(projectId);
+    if (project) {
+      if (!project.users.includes(userId)) {
+        return handleErrorResponse(res, 400, "Không có quyền truy cập");
+      }
+      project = await Project.findById(projectId).populate({
+        path: "users",
+        populate: [
+          {
+            path: "tasks",
+            // match: {
+            //   sectionId: {
+            //     _id: projectId,
+            //   },
+            // },
+            populate: [
+              {
+                path: "assignment",
+                select: selectUser,
+              },
+              {
+                path: "dependenciesTask",
+              },
+              {
+                path: "sectionId",
+                populate: [
+                  {
+                    path: "authorId",
+                    select: selectUser,
+                  },
+                ],
+                select: "name authorId projectId",
+              },
+              {
+                path: "labels",
+              },
+              {
+                path: "authorId",
+                select: selectUser,
+              },
+            ],
+          },
+        ],
+        select: selectUser,
+      });
+      await project.users.forEach(async (user) => {
+        let tasks = [];
+        await user.tasks.forEach((task) => {
+          if (task.sectionId.projectId.toString() === projectId) {
+            tasks.push(task);
+          }
+        });
+        user.tasks = [...tasks];
+      });
+      return handleSuccessResponse(res, 200, project.users, "Thành công");
+    } else {
+      return handleSuccessResponse(res, 400, "Không tồn tại project");
+    }
+  } catch (err) {
+    console.log(err);
+    return handleSuccessResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
 };
