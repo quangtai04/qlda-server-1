@@ -1,4 +1,5 @@
 const Blog = require("../model/blogModel");
+const Project = require("../model/projectModel");
 const {
     handleErrorResponse,
     handleSuccessResponse,
@@ -6,7 +7,7 @@ const {
 } = require("../helper/responseHelper");
 const User = require("../model/userModel");
 module.exports.addBlog = async (req, res) => {
-    let { title, content, describe } = req.body
+    let { title, content, describe, security, projectId } = req.body
     let userId = await getCurrentId(req);
     let user = await User.findById(userId);
     var blog = new Blog({
@@ -14,7 +15,13 @@ module.exports.addBlog = async (req, res) => {
         title: title,
         describe: describe,
         content: content,
+        security: security ? security : 'Pulic'
     });
+    if (security === 'Private') {
+        let project = await Project.findById(projectId);
+        project.training.push({ type: 'blog', blogId: blog })
+        await project.save();
+    }
     blog.save(async function (err, obj) {
         if (err) {
             return handleErrorResponse(res, 400, null, "Thất bại");
