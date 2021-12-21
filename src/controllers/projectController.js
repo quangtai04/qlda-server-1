@@ -581,7 +581,7 @@ module.exports.deleteMember = async (req, res) => {
     let user = await User.findById(userId);
     let member = await User.findById(memberId);
     if (project && user && member) {
-      if (memberId === project.userAdmin[0])
+      if (memberId === project.userAdmin[0].toString())
         return handleErrorResponse(
           res,
           400,
