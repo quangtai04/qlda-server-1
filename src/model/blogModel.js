@@ -8,6 +8,7 @@ var blogSchema = Schema(
     describe: { type: String },
     content: { type: String },
     security: { type: String, default: "Public" },
+    projectId: { type: Schema.Types.ObjectId, ref: "Project" },
     categoryId: { type: Schema.Types.ObjectId, ref: "Category" },
     comments: {
       type: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
