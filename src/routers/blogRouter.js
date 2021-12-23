@@ -4,7 +4,8 @@ const blogController = require("../controllers/blogController.js");
 const authUser = require("../middleware/userMiddleware");
 //router
 router.use(authUser);
-router.get("/removeBlog", blogController.removeBlog);
+router.get("/getBlogsProject", blogController.getBlogsProject);
+router.post("/removeBlog", blogController.removeBlog);
 router.post("/addBlog", blogController.addBlog);
 router.post("/getBlog", blogController.getBlog);
 router.post("/getBlogUser", blogController.getBlogUser);
