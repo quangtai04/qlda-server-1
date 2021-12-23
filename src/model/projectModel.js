@@ -17,7 +17,7 @@ var projectSchema = Schema(
       type: [
         {
           type: { type: String },
-          link: { type: String },
+          videoId: { type: Schema.Types.ObjectId, ref: "Video" },
           blogId: { type: Schema.Types.ObjectId, ref: "Blog" },
         },
       ],
