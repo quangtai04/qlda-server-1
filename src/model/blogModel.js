@@ -10,6 +10,7 @@ var blogSchema = Schema(
     security: { type: String, default: "Public" },
     projectId: { type: Schema.Types.ObjectId, ref: "Project" },
     categoryId: { type: Schema.Types.ObjectId, ref: "Category" },
+    money: { type: String, default: "Free" },
     comments: {
       type: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
       default: [],
