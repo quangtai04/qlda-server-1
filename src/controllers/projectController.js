@@ -4,13 +4,12 @@ const {
   getCurrentId,
 } = require("../helper/responseHelper");
 const Project = require("../model/projectModel");
-const Post = require("../model/postModel");
+const Blog = require("../model/blogModel");
+const Video = require("../model/videoModel");
 const User = require("../model/userModel");
-const Comment = require("../model/commentModel");
 const sectionController = require("./sectionController");
 const labelController = require("./labelController");
 const { RoleProject } = require("../helper/role");
-const { ObjectId } = require("mongoose");
 const Notification = require("../model/notificationModel");
 const notificationController = require("../controllers/notificationController");
 /**
@@ -214,7 +213,7 @@ module.exports.inviteJoinProject = async (req, res) => {
               if (err) {
                 return handleErrorResponse(res, 400, err);
               } else {
-                return handleSuccessResponse(res, 200, "Đã gửi lời mời");
+                return handleSuccessResponse(res, 200, {}, "Đã gửi lời mời");
               }
             }
           );
@@ -745,10 +744,59 @@ module.exports.getAllTasks = async function (req, res) {
       });
       return handleSuccessResponse(res, 200, project.users, "Thành công");
     } else {
-      return handleSuccessResponse(res, 400, "Không tồn tại project");
+      return handleErrorResponse(res, 400, "Không tồn tại project");
     }
   } catch (err) {
     console.log(err);
-    return handleSuccessResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
   }
 };
+
+module.exports.getAllTraining = async function (req, res) {
+  let { projectId } = req.query;
+  // let userId = await getCurrentId(req);
+  let blogArray = [];
+  let videoArray = [];
+  let project = await Project.findById(projectId);
+  let training = project.training;
+  // cach 1
+  // for (const element of training) {
+  //   if (element.type === "blog") {
+  //     let blog = await Blog.findById(element.blogId);
+  //     blogArray.push(blog);
+  //   } else {
+  //     let video = await Video.findById(element.videoId);
+  //     videoArray.push(video);
+  //   }
+  // }
+
+  // cach 2
+  await Promise.all(
+    training.map(async (element) => {
+      if (element.type === "blog") {
+        let blog = await Blog.findById(element.blogId).populate([
+          {
+            path: "authorId",
+            select: "avatar username role email _id",
+          },
+        ]);
+        blogArray.push(blog);
+      } else {
+        let video = await Video.findById(element.videoId).populate([
+          {
+            path: "authorId",
+            select: "avatar username role email _id",
+          },
+        ]);
+        videoArray.push(video);
+      }
+    })
+  );
+  return handleSuccessResponse(
+    res,
+    200,
+    { blogArray: blogArray, videoArray: videoArray },
+    "Thành công"
+  );
+};
+exports.getTypeTraining = async function (training) {};

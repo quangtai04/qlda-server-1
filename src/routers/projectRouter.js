@@ -12,6 +12,7 @@ router.post("/joinProject", projectController.joinProject);
 // router.post("/getProjectJoined", projectController.getProjectJoined);
 router.use(authProj);
 router.get("/getAllTasks", projectController.getAllTasks);
+router.get("/getAllTraining", projectController.getAllTraining);
 router.get("/getLabels", projectController.getLabels);
 router.get("/getUsers", projectController.getUsers);
 router.post("/deleteProject", projectController.deleteProject);

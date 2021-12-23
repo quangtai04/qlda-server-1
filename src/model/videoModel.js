@@ -1,27 +1,22 @@
 const mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
-var blogSchema = Schema(
+var videoSchema = Schema(
   {
     authorId: { type: Schema.Types.ObjectId, ref: "User" },
     title: { type: String },
+    videoId: { type: String },
     describe: { type: String },
-    content: { type: String },
-    security: { type: String, default: "Public" },
+    security: { type: String, default: "Private" },
     thumbnail: {
       type: String,
-      default:
-        "https://cdn.fullstack.edu.vn/f8-learning/blog_posts/1671/61b6368a3a089.jpg",
+      default: "https://img-c.udemycdn.com/course/240x135/692188_9da7_26.jpg",
     },
     projectId: { type: Schema.Types.ObjectId, ref: "Project" },
     categoryId: { type: Schema.Types.ObjectId, ref: "Category" },
     money: { type: String, default: "Free" },
-    comments: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
-      default: [],
-    },
   },
   { timestamps: true }
 );
-const Blog = mongoose.model("Blog", blogSchema);
-module.exports = Blog;
+const Video = mongoose.model("Video", videoSchema);
+module.exports = Video;
