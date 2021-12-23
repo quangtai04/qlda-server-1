@@ -6,9 +6,8 @@ const {
   getCurrentId,
 } = require("../helper/responseHelper");
 const User = require("../model/userModel");
-const Project = require("../model/projectModel");
 module.exports.addBlog = async (req, res) => {
-  let { title, content, describe, projectId } = req.body;
+  let { projectId, security } = req.body;
   let userId = await getCurrentId(req);
   let user = await User.findById(userId);
   var blog;
@@ -19,22 +18,21 @@ module.exports.addBlog = async (req, res) => {
     let project = await Project.findById(projectId);
     if (project) {
       blog = new Blog({
+        ...req.body,
         authorId: userId,
-        title: title,
-        describe: describe,
-        content: content,
-        projectId: projectId,
       });
+      if (security === 'Private') {
+        project.training.push({ type: 'blog', blogId: blog })
+        await project.save();
+      }
     } else {
       return handleErrorResponse(res, 400, "Không tồn tại project");
     }
   } else {
     blog = new Blog({
-      authorId: userId,
-      title: title,
-      describe: describe,
-      content: content,
+      ...req.body,
       projectId: null,
+      authorId: userId,
     });
   }
   blog.save(async function (err, obj) {
