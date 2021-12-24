@@ -6,6 +6,7 @@ const {
   getCurrentId,
 } = require("../helper/responseHelper");
 const User = require("../model/userModel");
+const Administrator = require("../model/administratorModel");
 module.exports.addVideo = async (req, res) => {
   let { projectId, security } = req.body;
   let userId = await getCurrentId(req);
@@ -22,6 +23,13 @@ module.exports.addVideo = async (req, res) => {
       });
       if (security === "Private") {
         project.training.push({ type: "video", videoId: video });
+        let administrator = new Administrator({
+          type: 'video',
+          status: false,
+          authorId: user,
+          videoId: video
+        })
+        await administrator.save();
         await project.save();
       }
       video.save(async function (err, obj) {

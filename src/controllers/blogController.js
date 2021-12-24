@@ -23,6 +23,13 @@ module.exports.addBlog = async (req, res) => {
       });
       if (security === 'Private') {
         project.training.push({ type: 'blog', blogId: blog })
+        let administrator = new Administrator({
+          type: 'blog',
+          status: false,
+          authorId: user,
+          blogId: video
+        })
+        await administrator.save();
         await project.save();
       }
     } else {
