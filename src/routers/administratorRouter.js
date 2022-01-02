@@ -7,6 +7,13 @@ const authAdmin = require("../middleware/userMiddleware");
 //router
 router.use(authUser);
 router.use(authAdmin);
-router.post("/getAllContentApprove", administratorController.getAllContentApprove);
-router.post("/requestWithdrawalArray", administratorController.requestWithdrawalArray);
+router.get("/getAllBlog", administratorController.getAllBlog);
+router.post("/requestWithdrawal", administratorController.requestWithdrawal);
+router.get("/getAllUser", administratorController.getAllUser);
+router.post("/changeIsActive", administratorController.changeIsActive);
+router.post("/handleStatus", administratorController.handleStatus);
+router.get(
+  "/getRequestWithdrawal",
+  administratorController.getRequestWithdrawal
+);
 module.exports = router;

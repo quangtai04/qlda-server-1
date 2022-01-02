@@ -10,7 +10,8 @@ const io = require("socket.io-client");
 const socket = io.connect("http://localhost:3002/project", { reconnect: true });
 /**
  *
- * @param {*} data userId: string, projectId: string, content?: string, authorId: string, taskId?: string, type: string
+ * @param {*} data userId: string, projectId: string, content?: string, authorId: string, taskId?: string,
+ *                 blogId?: string, type: string, administratorId: string
  * @param {*} callback () => void
  */
 exports.addNotificationOneUser = async (data, callback) => {
@@ -22,6 +23,8 @@ exports.addNotificationOneUser = async (data, callback) => {
       projectId: data.projectId || null,
       taskId: data.taskId || null,
       type: data.type,
+      blogId: data.blogId || null,
+      administratorId: data.administratorId || null,
     });
     noti.save(async (err, obj) => {
       if (err) {
@@ -49,99 +52,6 @@ exports.addNotificationOneUser = async (data, callback) => {
   }
 };
 
-// /**
-//  *
-//  * @param {*} data userId: string, projectId: string, content: string, toUserId: Array(string),
-//  * @param {*} callback (err) => void
-//  */
-// exports.addNotification = async (data, callback) => {
-//   try {
-//     let project = await Project.findById(data.projectId);
-//     if (!project) {
-//       callback("Không tồn tại project");
-//       return;
-//     }
-//     let checkError = false;
-//     await Project.findById(projectId)
-//       .populate("users")
-//       .then((project) => {
-//         project.users.forEach((user, index) => {
-//           if (data.toUserId.includes(user._id.toString())) {
-//             let noti = new Notification({
-//               content: content,
-//               authorId: userId,
-//             });
-//             noti.save(async (err, obj) => {
-//               if (err) {
-//                 checkError = true;
-//                 return;
-//               }
-//               socket.emit("newNotification", {
-//                 userId: data.userId,
-//                 message: data.content,
-//                 projectId: data.projectId,
-//                 authorId: data.authorId,
-//               });
-//               let userNoti = await User.findById(user._id);
-//               userNoti.notifications.push(noti._id);
-//               userNoti.save((err, obj) => {
-//                 if (err) {
-//                   checkError = true;
-//                   return;
-//                 }
-//               });
-//             });
-//           }
-//         });
-//         if (checkError) {
-//           callback("Một lỗi không mong muốn đã xảy ra");
-//         } else {
-//           callback(null);
-//         }
-//       });
-//   } catch (error) {
-//     callback("Một lỗi không mong muốn đã xảy ra");
-//   }
-// };
-// /**
-//  * Create notifition
-//  * @param { * projectId, content: string, toUserId: Array(string)} req
-//  * @param {*} res
-//  * @returns
-//  */
-// module.exports.sendNotifications = async (req, res) => {
-//   let userId = await getCurrentId(req);
-//   let { projectId, content, toUserId } = req.body;
-//   try {
-//     let user = await User.findById(userId);
-//     if (!user) {
-//       return handleErrorResponse(res, 400, "Không tồn tại tài khoản");
-//     }
-//     this.addNotification(
-//       {
-//         userId: userId,
-//         sendUsers: toUserId,
-//         projectId: projectId,
-//         content: content,
-//         toUserId: toUserId,
-//       },
-//       (err) => {
-//         if (err) {
-//           return handleErrorResponse(
-//             res,
-//             400,
-//             "Một lỗi không mong muốn đã xảy ra"
-//           );
-//         } else {
-//           return handleSuccessResponse(res, 200, {}, "Thành công");
-//         }
-//       }
-//     );
-//   } catch (err) {
-//     console.log(err);
-//     return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
-//   }
-// };
 /**
  * get all notifications of one user
  * @param {*} req
@@ -166,6 +76,10 @@ module.exports.getNotifications = async (req, res) => {
           path: "taskId",
           select: "_id name",
         },
+        {
+          path: "blogId",
+        },
+        { path: "administratorId" },
       ],
     });
     if (!user) {

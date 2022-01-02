@@ -7,6 +7,7 @@ var blogSchema = Schema(
     title: { type: String },
     describe: { type: String },
     content: { type: String },
+    status: { type: Number, default: 0 }, // -1: refuse; 0: undecided; 1: agree 
     security: { type: String, default: "Public" },
     thumbnail: {
       type: String,

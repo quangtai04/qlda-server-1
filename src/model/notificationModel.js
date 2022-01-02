@@ -11,8 +11,15 @@ var notificationSchema = Schema(
     authorId: { type: Schema.Types.ObjectId, ref: "User" },
     type: { type: String, default: "add-assingment" },
     // add-assingment, del-assingment, new-chat, project-invite, project-refuse, project-agree, project-refuse-invited, project-agree-invited
+    // add-blog, add-blog-agree, add-blog-refuse, withdrawal-user, withdrawal-admin-agree, withdrawal-admin-refuse, withdrawal-admin
     projectId: { type: Schema.Types.ObjectId, ref: "Project", default: null },
     taskId: { type: Schema.Types.ObjectId, ref: "Task", default: null },
+    blogId: { type: Schema.Types.ObjectId, ref: "Blog", default: null },
+    administratorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Administrator",
+      default: null,
+    },
   },
   { timestamps: true }
 );
