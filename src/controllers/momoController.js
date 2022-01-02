@@ -1,12 +1,23 @@
-const { handleSuccessResponse, getCurrentId } = require("../helper/responseHelper");
+const {
+  handleSuccessResponse,
+  getCurrentId,
+} = require("../helper/responseHelper");
 const User = require("../model/userModel");
+/**
+ *
+ * @param {*} req amount, type
+ * @param {*} res
+ */
 module.exports.payment = async (req, res) => {
   var partnerCode = "MOMO";
   var accessKey = "F8BBA842ECF85";
   var secretkey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
   var requestId = partnerCode + new Date().getTime();
   var orderId = requestId;
-  var orderInfo = "pay with MoMo";
+  var type = req.query.type;
+  console.log(type);
+  var orderInfo =
+    type === "upgrade" ? "Nâng cấp tài khoản" : "Nạp thêm tiền vào tài khoản";
   var redirectUrl = callBackPayment().toString();
   var ipnUrl = callBackPayment().toString();
   // var ipnUrl = redirectUrl = "https://webhook.site/454e7b77-f177-4ece-8236-ddf1c26ba7f8";
@@ -89,7 +100,7 @@ module.exports.payment = async (req, res) => {
     //     "Thành công!"
     //   );
     // });
-    resMomo.on("end", () => { });
+    resMomo.on("end", () => {});
   });
 
   req.on("error", (e) => {
@@ -98,19 +109,22 @@ module.exports.payment = async (req, res) => {
   reqMomo.write(requestBody);
   reqMomo.end();
 };
+
 module.exports.checkPayment = async (req, res) => {
-  const { amount, message, resultCode } = req.body
-  if (message === 'Successful.' && resultCode === '0') {
+  const { amount, message, resultCode, orderInfo } = req.body;
+  if (message === "Successful." && resultCode === "0") {
     let userId = await getCurrentId(req);
     let user = await User.findById(userId);
     if (user) {
-
+      if (orderInfo === "Nạp thêm tiền vào tài khoản") {
+        user.money += parseInt(amount);
+      }
       switch (amount) {
-        case '50000':
-          user.role = 'MemberPlus'
+        case "50000":
+          user.role = "MemberPlus";
           break;
-        case '100000':
-          user.role = 'MemberPro'
+        case "100000":
+          user.role = "MemberPro";
           break;
         default:
           break;
