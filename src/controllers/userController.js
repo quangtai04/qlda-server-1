@@ -36,7 +36,6 @@ exports.getNameAndAvatar = async (id) => {
 };
 module.exports.getUser = (req, res, next) => {};
 module.exports.loginUser = async (req, res) => {
-  ``;
   const { email, password } = req.body;
   try {
     const user = await User.login(email, password);
@@ -92,7 +91,12 @@ module.exports.updateAccount = async (req, res) => {
 
 module.exports.getCurrentUser = async (req, res) => {
   let id = await getCurrentId(req);
-  handleSuccessResponse(res, 200, { id: id });
+  let user = await User.findById(id);
+  if (user) {
+    handleSuccessResponse(res, 200, { id: id, isActive: user.isActive });
+  } else {
+    handleErrorResponse(res, 400, "Phiên đăng nhập đã kết thúc");
+  }
 };
 
 module.exports.logOut = async (req, res) => {
@@ -144,7 +148,7 @@ module.exports.getUserInfo = async (req, res) => {
       user_id = await getCurrentId(req);
     }
     if (user_id) {
-      const user = await User.findOne({ _id: user_id });
+      const user = await User.findById(user_id);
       if (user) {
         return handleSuccessResponse(
           res,
@@ -156,6 +160,8 @@ module.exports.getUserInfo = async (req, res) => {
             language: user.get("language"),
             email: user.get("email"),
             username: user.get("username"),
+            isActive: user.get("isActive"),
+            money: user.get("money"),
             birthday:
               (user.get("birthday")
                 ? String(user.get("birthday").getFullYear())
@@ -174,7 +180,7 @@ module.exports.getUserInfo = async (req, res) => {
                 : "01"),
             projects: user.get("projects"),
           },
-          "Get User Complate!"
+          "Thành công"
         );
       }
       return handleErrorResponse(res, 400, "Get User ERROR!");

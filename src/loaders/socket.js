@@ -95,7 +95,8 @@ module.exports = (server) => {
       if (
         data.type === "project-invite" ||
         data.type === "project-agree-invited" ||
-        data.type === "project-refuse-invited"
+        data.type === "project-refuse-invited" ||
+        data.type === "add-blog"
       ) {
         io.of("project").to("roomAll").emit("newNotification-client", data);
         io.of("project").to("roomAll").emit("notification-reload", data);

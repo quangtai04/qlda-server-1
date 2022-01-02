@@ -51,6 +51,11 @@ var userSchema = Schema(
       type: [{ type: Schema.Types.ObjectId, ref: "Notification" }],
       default: [],
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    money: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
