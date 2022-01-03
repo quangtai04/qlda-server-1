@@ -16,4 +16,5 @@ router.get(
   "/getRequestWithdrawal",
   administratorController.getRequestWithdrawal
 );
+router.post("/changeStatusBlog", administratorController.changeStatusBlog);
 module.exports = router;

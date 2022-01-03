@@ -9,7 +9,7 @@ const User = require("../model/userModel");
 const Administrator = require("../model/administratorModel");
 const Blog = require("../model/blogModel");
 const notificationController = require("../controllers/notificationController");
-exports.getAllBlogFunc = async (callback) => {
+exports.getAllBlogFunc = async () => {
   let blogsUndecided = await Administrator.find({
     type: "blog",
     status: 0,
@@ -36,7 +36,7 @@ exports.getAllBlogFunc = async (callback) => {
       select: "_id title",
     },
   ]);
-  callback([...blogsUndecided, ...blogs]);
+  return [...blogsUndecided, ...blogs];
 };
 module.exports.getAllBlog = async (req, res) => {
   let userId = await getCurrentId(req);
@@ -46,7 +46,7 @@ module.exports.getAllBlog = async (req, res) => {
       if (user.role !== "Admin") {
         return handleErrorResponse(res, 400, "Không có quyền truy cập");
       }
-      this.getAllBlogFunc((data) => {
+      this.getAllBlogFunc().then((data) => {
         return handleSuccessResponse(res, 200, data, "Thành công");
       });
     } else {
@@ -105,24 +105,26 @@ module.exports.handleStatus = async (req, res) => {
               }
               blog.save();
               administrator.save((err, obj) => {
-                this.getAllBlogFunc((data) => {
+                this.getAllBlogFunc().then((data) => {
                   return handleSuccessResponse(res, 200, data, "Thành công");
                 });
               });
             } else {
               return handleErrorResponse(res, 400, "Không tồn tại dữ liệu");
             }
+            break;
           case "video":
             return handleErrorResponse(
               res,
               400,
               "Một lỗi không mong muốn đã xảy ra"
             );
+
           case "money":
             let _administrator = await Administrator.findById(_id);
             if (_administrator) {
+              let user = await User.findById(_administrator.authorId);
               if (status) {
-                let user = await User.findById(_administrator.authorId);
                 if (user.money >= _administrator.amount) {
                   _administrator.status = 1;
                   user.money -= _administrator.amount;
@@ -296,10 +298,10 @@ module.exports.getAllUser = async (req, res) => {
       return handleErrorResponse(res, 400, "Không có quyền truy cập!");
     }
     let allUserAdmin = await User.find({ role: "Admin" }).select(
-      "_id avartar role email username isActive"
+      "_id avatar role email username isActive"
     );
     let allUsers = await User.find({ role: { $ne: "Admin" } }).select(
-      "_id avartar role email username isActive"
+      "_id avatar role email username isActive"
     );
     return handleSuccessResponse(
       res,
@@ -348,6 +350,76 @@ module.exports.changeIsActive = async (req, res) => {
             "Thành công"
           );
         });
+      }
+    } else {
+      return handleErrorResponse(res, 400, "Không có quyền truy cập");
+    }
+  } catch (error) {
+    return handleErrorResponse(res, 400, "Một lỗi không mong muốn đã xảy ra");
+  }
+};
+
+/**
+ *
+ * @param {*} req administratorId, status
+ * @param {*} res
+ */
+module.exports.changeStatusBlog = async (req, res) => {
+  let userId = await getCurrentId(req);
+  let { administratorId, status } = req.body;
+  try {
+    let user = await User.findById(userId);
+    if (user) {
+      if (user.role !== "Admin") {
+        return handleErrorResponse(res, 400, "Không có quyền truy cập");
+      }
+      let administrator = await Administrator.findById(administratorId);
+      let blog = await Blog.findById(administrator.blogId);
+      if (
+        administrator &&
+        blog &&
+        blog.money === "Money" &&
+        blog.security === "Public"
+      ) {
+        let member = await User.findById(blog.authorId);
+        if (blog.status === 1 && status === -1) {
+          member.money -= 5000;
+          notificationController.addNotificationOneUser(
+            {
+              userId: member._id,
+              content: `Admin đã đóng bài viết '${blog.title}' của bạn.`,
+              authorId: userId,
+              blogId: blog._id,
+              type: "content",
+            },
+            () => {}
+          );
+        } else if (blog.status === -1 && status === 1) {
+          member.money += 5000;
+          notificationController.addNotificationOneUser(
+            {
+              userId: member._id,
+              content: `Admin đã phê duyệt lại bài viết '${blog.title}' của bạn.`,
+              authorId: userId,
+              blogId: blog._id,
+              type: "content",
+            },
+            () => {}
+          );
+        }
+        administrator.status = status;
+        blog.status = status;
+        administrator.save((err, obj) => {
+          blog.save((err, obj) => {
+            member.save((err, obj) => {
+              this.getAllBlogFunc().then((data) => {
+                return handleSuccessResponse(res, 200, data, "Thành công");
+              });
+            });
+          });
+        });
+      } else {
+        return handleErrorResponse(res, 400, "Lỗi dữ liệu");
       }
     } else {
       return handleErrorResponse(res, 400, "Không có quyền truy cập");

@@ -2,6 +2,7 @@ const Blog = require("../model/blogModel");
 const Project = require("../model/projectModel");
 const Administrator = require("../model/administratorModel");
 const notificationController = require("../controllers/notificationController");
+const administratorController = require("../controllers/administratorController");
 const {
   handleErrorResponse,
   handleSuccessResponse,
@@ -93,7 +94,25 @@ module.exports.getBlog = async (req, res) => {
         select: "username avatar role",
       })
       .then((blog) => {
-        return handleSuccessResponse(res, 200, blog, "Thành công");
+        if (
+          user._id.toString() === blog.authorId._id.toString() ||
+          user.role === "Admin"
+        ) {
+          return handleSuccessResponse(res, 200, blog, "Thành công");
+        } else {
+          if (blog.security === "Private") {
+            return handleErrorResponse(res, 400, "SecurityPrivate");
+          } else if (blog.security === "Public") {
+            if (
+              blog.money === "Free" ||
+              (blog.money === "Money" && user.role === "MemberPro")
+            ) {
+              return handleSuccessResponse(res, 200, blog, "Thành công");
+            } else {
+              return handleErrorResponse(res, 400, "UpgradeAccount");
+            }
+          }
+        }
       });
   } else {
     await Blog.find({})
@@ -108,19 +127,15 @@ module.exports.getBlog = async (req, res) => {
   }
 };
 module.exports.getBlogUser = async (req, res) => {
-  let { userId, numberBlog } = req.body;
+  let { userId } = req.body;
   let _id = await getCurrentId(req);
   let blog;
   if (userId === _id) {
     // get all blog
-    blog = await Blog.find({ authorId: userId }).limit(
-      numberBlog ? numberBlog : 5
-    );
+    blog = await Blog.find({ authorId: userId });
   } else {
     // get all blog public
-    blog = await Blog.find({ authorId: userId, security: "Public" }).limit(
-      numberBlog ? numberBlog : 5
-    );
+    blog = await Blog.find({ authorId: userId, security: "Public" });
   }
   return handleSuccessResponse(res, 200, blog, "Thành công");
 };
@@ -163,6 +178,12 @@ module.exports.getBlogsProject = async (req, res) => {
     return handleErrorResponse(res, 400, "Lỗi lấy dữ liệu");
   }
 };
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
 module.exports.removeBlog = async (req, res) => {
   let { blogId } = req.body;
   let blog = await Blog.findByIdAndRemove(blogId);
@@ -172,6 +193,10 @@ module.exports.removeBlog = async (req, res) => {
   let userId = await getCurrentId(req);
   let user = await User.findById(userId);
   user.blogs.splice(user.blogs.indexOf(blogId), 1);
-  user.save();
-  return handleSuccessResponse(res, 200, {}, "Thành công");
+  user.save(async (err, obj) => {
+    let blog;
+    // get all blog
+    blog = await Blog.find({ authorId: userId });
+    return handleSuccessResponse(res, 200, blog, "Thành công");
+  });
 };
