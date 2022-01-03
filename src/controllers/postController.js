@@ -40,7 +40,14 @@ module.exports.addPost = async (req, res) => {
       await Project.findById(projectId)
         .populate({
           path: "posts",
-          populate: { path: "authorId", select: ["username", "avatar"] },
+          populate: [
+            {
+              path: "comments",
+              select: ["authorId", "content"],
+              populate: [{ path: "authorId", select: ["username", "avatar"] }],
+            },
+            { path: "authorId", select: ["username", "avatar"] },
+          ],
         })
         .then(async (project) => {
           project.posts.push(post);
@@ -62,7 +69,14 @@ module.exports.deletePost = async (req, res) => {
     await Project.findById(post.projectId)
       .populate({
         path: "posts",
-        populate: { path: "authorId", select: ["username", "avatar"] },
+        populate: [
+          {
+            path: "comments",
+            select: ["authorId", "content"],
+            populate: [{ path: "authorId", select: ["username", "avatar"] }],
+          },
+          { path: "authorId", select: ["username", "avatar"] },
+        ],
       })
       .then(async (project) => {
         project.posts.push(post);
@@ -84,7 +98,17 @@ module.exports.updatePost = async (req, res) => {
   );
   if (!post) return handleErrorResponse(res, 400, "Không tồn tại postId");
   await Project.findById(post.projectId)
-    .populate("posts")
+    .populate({
+      path: "posts",
+      populate: [
+        {
+          path: "comments",
+          select: ["authorId", "content"],
+          populate: [{ path: "authorId", select: ["username", "avatar"] }],
+        },
+        { path: "authorId", select: ["username", "avatar"] },
+      ],
+    })
     .then(async (project) => {
       return handleSuccessResponse(
         res,
