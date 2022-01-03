@@ -73,7 +73,11 @@ module.exports.getListChat = async (req, res) => {
         },
         {
           path: "projects",
-          select: ["name", "avatar"],
+          populate: {
+            path: "users",
+            select: "username avatar role email",
+          },
+          select: ["name", "avatar", "users"],
         },
       ])
       .then((user) => {
