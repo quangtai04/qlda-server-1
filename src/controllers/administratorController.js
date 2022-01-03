@@ -338,10 +338,10 @@ module.exports.changeIsActive = async (req, res) => {
             );
           }
           let allUserAdmin = await User.find({ role: "Admin" }).select(
-            "_id avartar role email username isActive"
+            "_id avatar role email username isActive"
           );
           let allUsers = await User.find({ role: { $ne: "Admin" } }).select(
-            "_id avartar role email username isActive"
+            "_id avatar role email username isActive"
           );
           return handleSuccessResponse(
             res,
